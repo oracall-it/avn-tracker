@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.env
+*.exe
+backend/server
+
+# Go build cache
+backend/graph/generated/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Playwright test results
+frontend/test-results/
+frontend/playwright-report/
+
+# IDE
+.idea/
+.vscode/
+*.swp
