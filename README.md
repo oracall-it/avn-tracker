@@ -59,7 +59,7 @@ Track games, monitor version updates, and discover new titles — all without le
 
 ### ⚙️ Everything Else
 
-- Light and dark theme with toggle (warm stone/amber palette)
+- Light and dark theme with toggle (warm stone palette)
 - Screenshot gallery with lightbox on game detail pages
 - Export library to JSON for backup
 - Import JSON to restore or migrate
@@ -97,14 +97,19 @@ Track games, monitor version updates, and discover new titles — all without le
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/avn-tracker.git
+git clone https://github.com/rleite-it/avn-tracker.git
 cd avn-tracker
+
+# Configure credentials (edit POSTGRES_PASSWORD to something strong)
+cp .env.example .env          # Linux / macOS
+copy .env.example .env        # Windows
 
 # Start everything
 docker compose up --build -d
 
 # Open the app
-open http://localhost:3001
+open http://localhost:3001     # Linux / macOS
+start http://localhost:3001   # Windows
 ```
 
 First run pulls base images and builds both containers — allow 2–5 minutes. Subsequent starts use cached layers and are near-instant.
@@ -200,9 +205,9 @@ Run backend and frontend separately for hot-reload during development.
 
 cd backend
 
-# Set the connection string
-export DATABASE_URL="postgres://avn:avn_secret@localhost:5432/avn_tracker?sslmode=disable"
-# PowerShell: $env:DATABASE_URL = "postgres://avn:..."
+# Set the connection string (use the values from your .env)
+export DATABASE_URL="postgres://<user>:<password>@localhost:5432/avn_tracker?sslmode=disable"
+# PowerShell: $env:DATABASE_URL = "postgres://..."
 
 # Start the API server (auto-runs migrations, playground at :8080)
 go run ./cmd/server
@@ -230,12 +235,22 @@ go run github.com/99designs/gqlgen generate
 
 ## Environment Variables
 
-| Variable       | Default                                                         | Description                  |
-| -------------- | --------------------------------------------------------------- | ---------------------------- |
-| `DATABASE_URL` | `postgres://avn:avn_secret@db:5432/avn_tracker?sslmode=disable` | PostgreSQL connection string |
-| `PORT`         | `8080`                                                          | API server port              |
+Credentials and config are kept in a `.env` file (gitignored). Copy the template and edit before first run:
 
-> ⚠️ The default credentials are for local development only. If you expose this to a network, set a strong `POSTGRES_PASSWORD` and update `DATABASE_URL`.
+```bash
+cp .env.example .env   # then open .env and set POSTGRES_PASSWORD
+```
+
+| Variable            | Example value   | Description                              |
+| ------------------- | --------------- | ---------------------------------------- |
+| `POSTGRES_DB`       | `avn_tracker`   | PostgreSQL database name                 |
+| `POSTGRES_USER`     | `avn`           | PostgreSQL username                      |
+| `POSTGRES_PASSWORD` | `change_me`     | PostgreSQL password — **change this**    |
+| `PORT`              | `8080`          | API server port (set inside docker-compose) |
+
+The `DATABASE_URL` passed to the API container is constructed automatically from the three `POSTGRES_*` variables in `docker-compose.yml`.
+
+> ⚠️ Never commit your `.env` file. It is listed in `.gitignore` and excluded from version control.
 
 ---
 
@@ -357,8 +372,9 @@ The in-app **Settings → Export** produces a portable JSON snapshot that can be
 Contributions are welcome. Please **open an issue first** for any significant change so we can align on approach.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/avn-tracker.git
+git clone https://github.com/rleite-it/avn-tracker.git
 cd avn-tracker
+cp .env.example .env   # configure credentials
 docker compose up --build -d
 ```
 
