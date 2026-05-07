@@ -55,6 +55,10 @@ jobs:
 
       - name: Start stack with Docker Compose
         run: docker compose up --build -d
+        env:
+          POSTGRES_DB: avn_tracker
+          POSTGRES_USER: avn
+          POSTGRES_PASSWORD: ci_test_password
 
       - name: Wait for services to be healthy
         run: |
@@ -63,6 +67,10 @@ jobs:
           echo "Waiting for API..."
           timeout 60 bash -c 'until curl -sf http://localhost:8080 > /dev/null; do sleep 2; done'
           echo "All services ready."
+        env:
+          POSTGRES_DB: avn_tracker
+          POSTGRES_USER: avn
+          POSTGRES_PASSWORD: ci_test_password
 
       - name: Run Playwright tests
         working-directory: frontend
@@ -82,3 +90,7 @@ jobs:
       - name: Stop stack
         if: always()
         run: docker compose down -v
+        env:
+          POSTGRES_DB: avn_tracker
+          POSTGRES_USER: avn
+          POSTGRES_PASSWORD: ci_test_password
