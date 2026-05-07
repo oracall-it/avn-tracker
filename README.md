@@ -85,8 +85,6 @@ Track games, monitor version updates, and discover new titles — all without le
 
 </div>
 
-> To add screenshots: create a `docs/screenshots/` folder in the repo root, drop in `library.png`, `discover.png`, `game-detail.png`, and `settings.png`, then commit.
-
 ---
 
 ## Tech Stack
