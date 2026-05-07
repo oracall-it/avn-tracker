@@ -71,6 +71,24 @@ Track games, monitor version updates, and discover new titles — all without le
 
 ---
 
+## Screenshots
+
+<div align="center">
+
+| Library (grid view) | Discover |
+|:---:|:---:|
+| ![Library](docs/screenshots/library.png) | ![Discover](docs/screenshots/discover.png) |
+
+| Game Detail | Settings |
+|:---:|:---:|
+| ![Game Detail](docs/screenshots/game-detail.png) | ![Settings](docs/screenshots/settings.png) |
+
+</div>
+
+> To add screenshots: create a `docs/screenshots/` folder in the repo root, drop in `library.png`, `discover.png`, `game-detail.png`, and `settings.png`, then commit.
+
+---
+
 ## Tech Stack
 
 <div align="center">
