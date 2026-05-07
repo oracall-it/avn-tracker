@@ -1,0 +1,94 @@
+scalar Time
+
+enum GameStatus {
+  PLAYING
+  COMPLETED
+  WANT
+  DROPPED
+  ON_HOLD
+}
+
+enum DevStatus {
+  ONGOING
+  COMPLETE
+  ABANDONED
+}
+
+type Game {
+  id: ID!
+  title: String!
+  developer: String!
+  coverUrl: String!
+  status: GameStatus!
+  devStatus: DevStatus!
+  myVersion: String!
+  latestVersion: String!
+  downloadUrl: String!
+  tags: [String!]!
+  notes: String!
+  description: String!
+  vndbId: String
+  hasUpdate: Boolean!
+  addedAt: Time!
+  updatedAt: Time!
+}
+
+input GameFilter {
+  status: GameStatus
+  hasUpdate: Boolean
+  tag: String
+  search: String
+}
+
+input GameInput {
+  title: String!
+  developer: String
+  coverUrl: String
+  status: GameStatus
+  devStatus: DevStatus
+  myVersion: String
+  latestVersion: String
+  downloadUrl: String
+  tags: [String!]
+  notes: String
+  description: String
+  vndbId: String
+}
+
+type VNDBScreenshot {
+  thumbnail: String!
+  url: String!
+}
+
+type VNDBResult {
+  vndbId: String!
+  title: String!
+  developer: String!
+  coverUrl: String!
+  tags: [String!]!
+  description: String!
+  screenshots: [VNDBScreenshot!]!
+}
+
+type VNDBPage {
+  results: [VNDBResult!]!
+  count: Int!
+  more: Boolean!
+}
+
+type Query {
+  games(filter: GameFilter): [Game!]!
+  game(id: ID!): Game
+  searchVNDB(query: String!, page: Int, adultsOnly: Boolean): VNDBPage!
+  getVNDBGame(vndbId: String!): VNDBResult
+}
+
+type Mutation {
+  addGame(input: GameInput!): Game!
+  updateGame(id: ID!, input: GameInput!): Game!
+  deleteGame(id: ID!): Boolean!
+  importFromVNDB(vndbId: String!): Game!
+  syncLatestVersion(id: ID!): Game!
+  exportLibrary: String!
+  importLibrary(json: String!): Boolean!
+}
