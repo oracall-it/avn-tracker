@@ -14,6 +14,10 @@ backend/graph/generated/
 frontend/test-results/
 frontend/playwright-report/
 
+# Claude Code
+.claude/
+CLAUDE.md
+
 # IDE
 .idea/
 .vscode/
