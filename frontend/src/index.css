@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-amber-50: #fff0f7;
+  --color-amber-100: #ffdcea;
+  --color-amber-200: #ffb8d5;
+  --color-amber-300: #ff84b8;
+  --color-amber-400: #f8599a;
+  --color-amber-500: #f95597;
+  --color-amber-600: #f83d85;
+  --color-amber-700: #d91a6a;
+  --color-amber-800: #b81254;
+  --color-amber-900: #8c0e42;
+  --color-amber-950: #5a0929;
+}
+
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }

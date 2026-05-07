@@ -1,0 +1,33 @@
+{
+  "name": "avn-tracker-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.13.8",
+    "graphql": "^16.10.0",
+    "lucide-react": "^0.513.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.56.4",
+    "react-router-dom": "^7.6.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@tailwindcss/vite": "^4.1.6",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.5.1",
+    "tailwindcss": "^4.1.6",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
