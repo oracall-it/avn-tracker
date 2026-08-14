@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useScrollLock } from '../hooks/useScrollLock'
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@apollo/client'
 import { X } from 'lucide-react'
@@ -31,6 +32,7 @@ const inputCls = 'w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 d
 const labelCls = 'block text-xs font-semibold text-stone-600 dark:text-stone-400 mb-1.5 uppercase tracking-wide'
 
 export function GameModal({ game, onClose }: Props) {
+  useScrollLock()
   const [tab, setTab] = useState<'manual' | 'vndb'>('manual')
   const isEdit = !!game
 
