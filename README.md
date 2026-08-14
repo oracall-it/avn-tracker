@@ -7,7 +7,7 @@
 **A self-hosted, privacy-first library manager for adult visual novels.**
 Track games, monitor version updates, and discover new titles — all without leaving your machine.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Go Tests](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml/badge.svg?label=Go%20Tests)](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml) [![E2E Tests](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml/badge.svg?label=E2E)](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml) [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev) [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev) [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org) [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org) [![GraphQL](https://img.shields.io/badge/GraphQL-gqlgen-E10098?logo=graphql&logoColor=white)](https://gqlgen.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Go Tests](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml/badge.svg?label=Go%20Tests)](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml) [![E2E Tests](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml/badge.svg?label=E2E)](https://github.com/rleite-it/avn-tracker/actions/workflows/test.yml) [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev) [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev) [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org) [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org) [![GraphQL](https://img.shields.io/badge/GraphQL-gqlgen-E10098?logo=graphql&logoColor=white)](https://gqlgen.com)
 
 > **Runs entirely on your machine via Docker. No accounts. No cloud. No data leaves your system.**
 
@@ -48,21 +48,21 @@ Track games, monitor version updates, and discover new titles — all without le
 
 ### 🔍 Discover
 
-- Browse popular visual novels from VNDB in real time
+- Browse and search visual novels from **VNDB** in real time
+- Browse and search adult games from **F95Zone** (requires account credentials)
 - Debounced live search — no button required
-- Adult-only filter (18+ toggle, enabled by default)
-- Pagination with page navigation
-- In-app VN detail pages with description, screenshots, and tags
+- In-app detail pages for both VNDB and F95Zone with description, screenshots, and tags
 
 </td>
 <td>
 
-### ⚙️ Everything Else
+### ⚙️ Settings & Everything Else
 
+- F95Zone credentials management (username + password, stored locally)
+- Export full library to JSON for backup or migration
+- Import JSON to restore library on any AVN Tracker instance
 - Light and dark theme with toggle (warm stone palette)
 - Screenshot gallery with lightbox on game detail pages
-- Export library to JSON for backup
-- Import JSON to restore or migrate
 - VNDB rate limiting + response cache to respect API usage policy
 
 </td>
@@ -75,12 +75,12 @@ Track games, monitor version updates, and discover new titles — all without le
 
 <div align="center">
 
-| Library (grid view) | Discover |
-|:---:|:---:|
+|           Library (grid view)            |                  Discover                  |
+| :--------------------------------------: | :----------------------------------------: |
 | ![Library](docs/screenshots/library.png) | ![Discover](docs/screenshots/discover.png) |
 
-| Game Detail | Settings |
-|:---:|:---:|
+|                   Game Detail                    |                  Settings                  |
+| :----------------------------------------------: | :----------------------------------------: |
 | ![Game Detail](docs/screenshots/game-detail.png) | ![Settings](docs/screenshots/settings.png) |
 
 </div>
@@ -97,7 +97,7 @@ Track games, monitor version updates, and discover new titles — all without le
 |    ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white&style=flat-square)     | Full type safety across the frontend                    |
 | ![TailwindCSS](https://img.shields.io/badge/-Tailwind_CSS_v4-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square) | Utility-first styling with warm theme + dark mode       |
 |   ![Apollo](https://img.shields.io/badge/-Apollo_Client-311C87?logo=apollographql&logoColor=white&style=flat-square)    | GraphQL client with caching                             |
-|              ![Go](https://img.shields.io/badge/-Go_1.25-00ADD8?logo=go&logoColor=white&style=flat-square)              | High-performance GraphQL API (gqlgen, code-first)       |
+|              ![Go](https://img.shields.io/badge/-Go_1.26-00ADD8?logo=go&logoColor=white&style=flat-square)              | High-performance GraphQL API (gqlgen, code-first)       |
 |         ![GraphQL](https://img.shields.io/badge/-GraphQL-E10098?logo=graphql&logoColor=white&style=flat-square)         | Typed API contract between frontend and backend         |
 |   ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL_16-336791?logo=postgresql&logoColor=white&style=flat-square)   | Persistent storage via pgx/v5 (raw SQL, no ORM)         |
 |      ![Docker](https://img.shields.io/badge/-Docker_Compose-2496ED?logo=docker&logoColor=white&style=flat-square)       | One-command local deployment                            |
@@ -190,21 +190,27 @@ avn-tracker/
     └── src/
         ├── App.tsx                      # Apollo + Router + Nav + theme toggle
         ├── components/
+        │   ├── ConfirmModal.tsx         # generic confirmation modal
         │   ├── FilterBar.tsx            # status pills + search + tag filter
         │   ├── GameCard.tsx             # grid card component
+        │   ├── GameDetailView.tsx       # ⭐ shared detail layout (library + discover)
         │   ├── GameModal.tsx            # add/edit form (react-hook-form)
         │   ├── GameRow.tsx              # list row component
+        │   ├── ScreenshotCarousel.tsx   # screenshot gallery with lightbox
         │   ├── UpdateBadge.tsx          # update available indicator
         │   └── VNDBSearchInline.tsx     # VNDB search inside add-game modal
+        ├── hooks/
+        │   └── useScrollLock.ts        # locks body scroll while a modal is open
         ├── graphql/
         │   ├── queries.ts               # Apollo gql query definitions
         │   └── mutations.ts             # Apollo gql mutation definitions
         ├── pages/
-        │   ├── Discover.tsx             # VNDB browse + search + pagination
-        │   ├── GameDetail.tsx           # library game detail + screenshot gallery
+        │   ├── Discover.tsx             # VNDB + F95Zone browse, search, pagination
+        │   ├── F95GameDetail.tsx        # F95Zone game detail + import to library
+        │   ├── GameDetail.tsx           # library game detail
         │   ├── Library.tsx              # main library (grid/list)
-        │   ├── Settings.tsx             # export / import JSON
-        │   └── VNDBGameDetail.tsx       # VNDB game detail (not yet in library)
+        │   ├── Settings.tsx             # F95Zone credentials + export/import JSON
+        │   └── VNDBGameDetail.tsx       # VNDB game detail (discover → library)
         └── types/game.ts                # TypeScript interfaces + status colour maps
 ```
 
@@ -212,12 +218,29 @@ avn-tracker/
 
 ## Development Setup
 
-Run backend and frontend separately for hot-reload during development.
+Two options: Docker hot-reload (easiest) or running services separately.
 
-### Backend
+### Option A — Docker dev containers (recommended)
+
+Both services hot-reload on save without rebuilding the image.
 
 ```bash
-# Requires Go 1.25+ and a running PostgreSQL instance
+# Start dev stack (backend + frontend + database)
+docker compose -f docker-compose.dev.yml up --build
+
+# Frontend at http://localhost:5173 — hot module replacement via Vite
+# Backend at http://localhost:8080 — live-reload via air
+```
+
+Backend reloads on any `.go` file change via [air](https://github.com/air-verse/air).
+Frontend reloads via Vite HMR with `usePolling: true` for Windows NTFS compatibility.
+
+### Option B — Run services manually
+
+#### Backend
+
+```bash
+# Requires Go 1.26+ and a running PostgreSQL instance
 
 cd backend
 
@@ -229,7 +252,7 @@ export DATABASE_URL="postgres://<user>:<password>@localhost:5432/avn_tracker?ssl
 go run ./cmd/server
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
 # Requires Node.js 20+
@@ -257,12 +280,14 @@ Credentials and config are kept in a `.env` file (gitignored). Copy the template
 cp .env.example .env   # then open .env and set POSTGRES_PASSWORD
 ```
 
-| Variable            | Example value   | Description                              |
-| ------------------- | --------------- | ---------------------------------------- |
-| `POSTGRES_DB`       | `avn_tracker`   | PostgreSQL database name                 |
-| `POSTGRES_USER`     | `avn`           | PostgreSQL username                      |
-| `POSTGRES_PASSWORD` | `change_me`     | PostgreSQL password — **change this**    |
-| `PORT`              | `8080`          | API server port (set inside docker-compose) |
+| Variable            | Example value | Description                                 |
+| ------------------- | ------------- | ------------------------------------------- |
+| `POSTGRES_DB`       | `avn_tracker` | PostgreSQL database name                    |
+| `POSTGRES_USER`     | `avn`         | PostgreSQL username                         |
+| `POSTGRES_PASSWORD` | `change_me`   | PostgreSQL password — **change this**       |
+| `PORT`              | `8080`        | API server port (set inside docker-compose) |
+
+F95Zone credentials (username and password) are stored in the database via **Settings → F95Zone** and never leave the server. They are not environment variables.
 
 The `DATABASE_URL` passed to the API container is constructed automatically from the three `POSTGRES_*` variables in `docker-compose.yml`.
 
@@ -407,6 +432,8 @@ docker compose up --build -d
 - [ ] Personal rating / score field
 - [ ] Mobile layout improvements
 - [ ] User-configurable adult content tag IDs
+- [ ] F95Zone cover image scraping (currently uses engine-gradient placeholder)
+- [ ] F95Zone pagination on search results
 
 ---
 
