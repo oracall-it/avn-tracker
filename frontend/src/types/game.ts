@@ -15,6 +15,7 @@ export interface Game {
   notes: string
   description: string
   vndbId?: string | null
+  f95Id?: string | null
   hasUpdate: boolean
   addedAt: string
   updatedAt: string
@@ -61,6 +62,39 @@ export interface GameInput {
   notes?: string
   description?: string
   vndbId?: string
+  f95Id?: string
+}
+
+export interface F95SearchItem {
+  threadId: string
+  threadUrl: string
+  title: string
+  version: string
+  engine: string
+  tags: string[]
+}
+
+export interface F95SearchResult {
+  results: F95SearchItem[]
+}
+
+export interface F95Game {
+  threadId: string
+  threadUrl: string
+  title: string
+  developer: string
+  version: string
+  coverUrl: string
+  description: string
+  tags: string[]
+  engine: string
+  f95Status: string
+  screenshots: string[]
+}
+
+export interface AppSettings {
+  f95Username: string
+  f95Connected: boolean
 }
 
 export const STATUS_LABELS: Record<GameStatus, string> = {

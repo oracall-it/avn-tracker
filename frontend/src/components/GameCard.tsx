@@ -11,6 +11,12 @@ interface Props {
   onEdit: (game: Game) => void
 }
 
+function gameDetailUrl(game: Game): string {
+  if (game.vndbId) return `/discover/game/${game.vndbId}`
+  if (game.f95Id) return `/discover/f95/${encodeURIComponent(`https://f95zone.to/threads/${game.f95Id}/`)}`
+  return `/game/${game.id}`
+}
+
 export function GameCard({ game, onEdit }: Props) {
   const navigate = useNavigate()
   const [sync, { loading: syncing }] = useMutation(SYNC_LATEST_VERSION, { refetchQueries: [GET_GAMES] })
@@ -21,7 +27,7 @@ export function GameCard({ game, onEdit }: Props) {
       {/* Cover */}
       <div
         className="relative aspect-[2/3] bg-stone-100 dark:bg-stone-800 overflow-hidden cursor-pointer"
-        onClick={() => navigate(`/game/${game.id}`)}
+        onClick={() => navigate(gameDetailUrl(game))}
       >
         {game.coverUrl ? (
           <img
@@ -87,7 +93,7 @@ export function GameCard({ game, onEdit }: Props) {
       <div className="p-3 flex flex-col gap-2">
         {/* Title */}
         <button
-          onClick={() => navigate(`/game/${game.id}`)}
+          onClick={() => navigate(gameDetailUrl(game))}
           className="text-left text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug line-clamp-2 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
         >
           {game.title}

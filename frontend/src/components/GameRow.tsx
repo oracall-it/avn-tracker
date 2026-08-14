@@ -11,6 +11,12 @@ interface Props {
   onEdit: (game: Game) => void
 }
 
+function gameDetailUrl(game: Game): string {
+  if (game.vndbId) return `/discover/game/${game.vndbId}`
+  if (game.f95Id) return `/discover/f95/${encodeURIComponent(`https://f95zone.to/threads/${game.f95Id}/`)}`
+  return `/game/${game.id}`
+}
+
 export function GameRow({ game, onEdit }: Props) {
   const navigate = useNavigate()
   const [sync, { loading: syncing }] = useMutation(SYNC_LATEST_VERSION, { refetchQueries: [GET_GAMES] })
@@ -23,7 +29,7 @@ export function GameRow({ game, onEdit }: Props) {
         <div className="flex items-center gap-3">
           <div
             className="shrink-0 w-8 h-12 rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800 cursor-pointer"
-            onClick={() => navigate(`/game/${game.id}`)}
+            onClick={() => navigate(gameDetailUrl(game))}
           >
             {game.coverUrl ? (
               <img
@@ -36,7 +42,7 @@ export function GameRow({ game, onEdit }: Props) {
           </div>
           <div className="min-w-0">
             <button
-              onClick={() => navigate(`/game/${game.id}`)}
+              onClick={() => navigate(gameDetailUrl(game))}
               className="text-left text-sm font-semibold text-stone-900 dark:text-stone-100 hover:text-amber-700 dark:hover:text-amber-400 transition-colors truncate block max-w-[240px]"
             >
               {game.title}
