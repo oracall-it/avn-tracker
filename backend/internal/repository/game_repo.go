@@ -24,7 +24,7 @@ func NewGameRepo(pool *pgxpool.Pool) *GameRepo {
 func (r *GameRepo) List(ctx context.Context, filter *model.GameFilter) ([]*model.Game, error) {
 	q := `SELECT id, title, developer, cover_url, status, dev_status,
 	             my_version, latest_version, download_url, tags, notes, description,
-	             vndb_id, added_at, updated_at
+	             vndb_id, f95_id, added_at, updated_at
 	      FROM games WHERE 1=1`
 	args := []any{}
 	i := 1
@@ -74,7 +74,7 @@ func (r *GameRepo) List(ctx context.Context, filter *model.GameFilter) ([]*model
 func (r *GameRepo) Get(ctx context.Context, id string) (*model.Game, error) {
 	q := `SELECT id, title, developer, cover_url, status, dev_status,
 	             my_version, latest_version, download_url, tags, notes, description,
-	             vndb_id, added_at, updated_at
+	             vndb_id, f95_id, added_at, updated_at
 	      FROM games WHERE id = $1`
 	row := r.pool.QueryRow(ctx, q, id)
 	return scanGame(row)
@@ -102,11 +102,11 @@ func (r *GameRepo) Create(ctx context.Context, in model.GameInput) (*model.Game,
 	}
 
 	q := `INSERT INTO games (title, developer, cover_url, status, dev_status,
-	                         my_version, latest_version, download_url, tags, notes, description, vndb_id)
-	      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+	                         my_version, latest_version, download_url, tags, notes, description, vndb_id, f95_id)
+	      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
 	      RETURNING id, title, developer, cover_url, status, dev_status,
 	                my_version, latest_version, download_url, tags, notes, description,
-	                vndb_id, added_at, updated_at`
+	                vndb_id, f95_id, added_at, updated_at`
 
 	row := r.pool.QueryRow(ctx, q,
 		in.Title,
@@ -121,6 +121,7 @@ func (r *GameRepo) Create(ctx context.Context, in model.GameInput) (*model.Game,
 		strOrEmpty(in.Notes),
 		strOrEmpty(in.Description),
 		in.VndbID,
+		in.F95Id,
 	)
 	return scanGame(row)
 }
@@ -157,11 +158,11 @@ func (r *GameRepo) Update(ctx context.Context, id string, in model.GameInput) (*
 	q := `UPDATE games SET
 	        title=$1, developer=$2, cover_url=$3, status=$4, dev_status=$5,
 	        my_version=$6, latest_version=$7, download_url=$8, tags=$9, notes=$10,
-	        description=$11, vndb_id=$12, updated_at=$13
-	      WHERE id=$14
+	        description=$11, vndb_id=$12, f95_id=$13, updated_at=$14
+	      WHERE id=$15
 	      RETURNING id, title, developer, cover_url, status, dev_status,
 	                my_version, latest_version, download_url, tags, notes, description,
-	                vndb_id, added_at, updated_at`
+	                vndb_id, f95_id, added_at, updated_at`
 
 	row := r.pool.QueryRow(ctx, q,
 		apply(current.Title, &in.Title),
@@ -176,6 +177,7 @@ func (r *GameRepo) Update(ctx context.Context, id string, in model.GameInput) (*
 		apply(current.Notes, in.Notes),
 		apply(current.Description, in.Description),
 		merge(current.VndbID, in.VndbID),
+		merge(current.F95Id, in.F95Id),
 		time.Now(),
 		id,
 	)
@@ -191,7 +193,7 @@ func (r *GameRepo) UpdateLatestVersion(ctx context.Context, id, latestVersion st
 	q := `UPDATE games SET latest_version=$1, updated_at=$2 WHERE id=$3
 	      RETURNING id, title, developer, cover_url, status, dev_status,
 	                my_version, latest_version, download_url, tags, notes, description,
-	                vndb_id, added_at, updated_at`
+	                vndb_id, f95_id, added_at, updated_at`
 	row := r.pool.QueryRow(ctx, q, latestVersion, time.Now(), id)
 	return scanGame(row)
 }
@@ -210,6 +212,7 @@ type ExportRow struct {
 	Notes         string    `json:"notes"`
 	Description   string    `json:"description"`
 	VndbID        *string   `json:"vndbId,omitempty"`
+	F95ID         *string   `json:"f95Id,omitempty"`
 	AddedAt       time.Time `json:"addedAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 }
@@ -227,7 +230,7 @@ func (r *GameRepo) Export(ctx context.Context) (string, error) {
 			MyVersion: g.MyVersion, LatestVersion: g.LatestVersion,
 			DownloadURL: g.DownloadURL, Tags: g.Tags, Notes: g.Notes,
 			Description: g.Description,
-			VndbID: g.VndbID, AddedAt: g.AddedAt, UpdatedAt: g.UpdatedAt,
+			VndbID: g.VndbID, F95ID: g.F95Id, AddedAt: g.AddedAt, UpdatedAt: g.UpdatedAt,
 		}
 	}
 	b, err := json.Marshal(rows)
@@ -249,16 +252,16 @@ func (r *GameRepo) Import(ctx context.Context, jsonStr string) error {
 		_, err := r.pool.Exec(ctx, `
 			INSERT INTO games (id, title, developer, cover_url, status, dev_status,
 			                   my_version, latest_version, download_url, tags, notes, description,
-			                   vndb_id, added_at, updated_at)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+			                   vndb_id, f95_id, added_at, updated_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
 			ON CONFLICT (id) DO UPDATE SET
 			  title=$2, developer=$3, cover_url=$4, status=$5, dev_status=$6,
 			  my_version=$7, latest_version=$8, download_url=$9, tags=$10,
-			  notes=$11, description=$12, vndb_id=$13, updated_at=$15`,
+			  notes=$11, description=$12, vndb_id=$13, f95_id=$14, updated_at=$16`,
 			row.ID, row.Title, row.Developer, row.CoverURL,
 			string(status), string(devStatus),
 			row.MyVersion, row.LatestVersion, row.DownloadURL,
-			tags, row.Notes, row.Description, row.VndbID, row.AddedAt, row.UpdatedAt,
+			tags, row.Notes, row.Description, row.VndbID, row.F95ID, row.AddedAt, row.UpdatedAt,
 		)
 		if err != nil {
 			return err
@@ -278,7 +281,7 @@ func scanGame(row scanner) (*model.Game, error) {
 		&g.ID, &g.Title, &g.Developer, &g.CoverURL,
 		&status, &devStatus,
 		&g.MyVersion, &g.LatestVersion, &g.DownloadURL,
-		&g.Tags, &g.Notes, &g.Description, &g.VndbID,
+		&g.Tags, &g.Notes, &g.Description, &g.VndbID, &g.F95Id,
 		&g.AddedAt, &g.UpdatedAt,
 	)
 	if err != nil {

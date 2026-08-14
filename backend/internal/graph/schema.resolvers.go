@@ -101,6 +101,92 @@ func (r *mutationResolver) ImportLibrary(ctx context.Context, json string) (bool
 	return err == nil, err
 }
 
+// ImportFromF95 is the resolver for the importFromF95 field.
+func (r *mutationResolver) ImportFromF95(ctx context.Context, threadURL string) (*model.Game, error) {
+	if !r.F95.IsLoggedIn() {
+		return nil, fmt.Errorf("not logged in to F95Zone — set credentials in Settings")
+	}
+
+	game, err := r.F95.GetGame(ctx, threadURL)
+	if err != nil {
+		return nil, fmt.Errorf("scrape F95Zone thread: %w", err)
+	}
+
+	f95ID := game.ThreadID
+	input := model.GameInput{
+		Title:         game.Title,
+		Developer:     &game.Developer,
+		CoverURL:      &game.CoverURL,
+		Tags:          game.Tags,
+		LatestVersion: &game.Version,
+		Description:   &game.Description,
+		F95Id:         &f95ID,
+	}
+	return r.Repo.Create(ctx, input)
+}
+
+// SyncF95Version is the resolver for the syncF95Version field.
+func (r *mutationResolver) SyncF95Version(ctx context.Context, id string) (*model.Game, error) {
+	game, err := r.Repo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if game == nil {
+		return nil, fmt.Errorf("game %s not found", id)
+	}
+	if game.F95Id == nil || *game.F95Id == "" {
+		return nil, fmt.Errorf("game %s has no F95Zone thread ID", id)
+	}
+	if !r.F95.IsLoggedIn() {
+		return nil, fmt.Errorf("not logged in to F95Zone — set credentials in Settings")
+	}
+
+	threadURL := fmt.Sprintf("https://f95zone.to/threads/%s/", *game.F95Id)
+	// Invalidate cache so we get fresh data.
+	r.F95.InvalidateCache(threadURL)
+
+	f95Game, err := r.F95.GetGame(ctx, threadURL)
+	if err != nil {
+		return nil, fmt.Errorf("scrape F95Zone thread: %w", err)
+	}
+	if f95Game.Version == "" {
+		return game, nil
+	}
+	return r.Repo.UpdateLatestVersion(ctx, id, f95Game.Version)
+}
+
+// SetF95Credentials is the resolver for the setF95Credentials field.
+func (r *mutationResolver) SetF95Credentials(ctx context.Context, username string, password string) (bool, error) {
+	if err := r.Settings.Set(ctx, "f95_username", username); err != nil {
+		return false, err
+	}
+	if err := r.Settings.Set(ctx, "f95_password", password); err != nil {
+		return false, err
+	}
+
+	// Attempt login immediately.
+	err := r.F95.Login(ctx, username, password)
+	return err == nil, err
+}
+
+// TestF95Connection is the resolver for the testF95Connection field.
+func (r *mutationResolver) TestF95Connection(ctx context.Context) (bool, error) {
+	if r.F95.IsLoggedIn() {
+		return true, nil
+	}
+
+	username, password, err := r.Settings.GetF95Credentials(ctx)
+	if err != nil {
+		return false, err
+	}
+	if username == "" || password == "" {
+		return false, fmt.Errorf("F95Zone credentials not configured")
+	}
+
+	err = r.F95.Login(ctx, username, password)
+	return err == nil, err
+}
+
 // Games is the resolver for the games field.
 func (r *queryResolver) Games(ctx context.Context, filter *model.GameFilter) ([]*model.Game, error) {
 	return r.Repo.List(ctx, filter)
@@ -146,6 +232,88 @@ func (r *queryResolver) GetVNDBGame(ctx context.Context, vndbID string) (*model.
 		return nil, err
 	}
 	return vnToResult(vn), nil
+}
+
+// SearchF95 is the resolver for the searchF95 field.
+func (r *queryResolver) SearchF95(ctx context.Context, query string, page *int) (*model.F95SearchResult, error) {
+	if !r.F95.IsLoggedIn() {
+		return nil, fmt.Errorf("not logged in to F95Zone — set credentials in Settings")
+	}
+
+	p := 1
+	if page != nil {
+		p = *page
+	}
+
+	items, err := r.F95.Search(ctx, query, p)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*model.F95SearchItem, 0, len(items))
+	for _, item := range items {
+		tags := item.Tags
+		if tags == nil {
+			tags = []string{}
+		}
+		results = append(results, &model.F95SearchItem{
+			ThreadID:  item.ThreadID,
+			ThreadURL: item.ThreadURL,
+			Title:     item.Title,
+			Version:   item.Version,
+			Engine:    item.Engine,
+			Tags:      tags,
+		})
+	}
+
+	return &model.F95SearchResult{Results: results}, nil
+}
+
+// GetF95Game is the resolver for the getF95Game field.
+func (r *queryResolver) GetF95Game(ctx context.Context, threadURL string) (*model.F95Game, error) {
+	if !r.F95.IsLoggedIn() {
+		return nil, fmt.Errorf("not logged in to F95Zone — set credentials in Settings")
+	}
+
+	game, err := r.F95.GetGame(ctx, threadURL)
+	if err != nil {
+		return nil, err
+	}
+
+	screenshots := game.Screenshots
+	if screenshots == nil {
+		screenshots = []string{}
+	}
+	tags := game.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+
+	return &model.F95Game{
+		ThreadID:    game.ThreadID,
+		ThreadURL:   game.ThreadURL,
+		Title:       game.Title,
+		Developer:   game.Developer,
+		Version:     game.Version,
+		CoverURL:    game.CoverURL,
+		Description: game.Description,
+		Tags:        tags,
+		Engine:      game.Engine,
+		F95Status:   game.Status,
+		Screenshots: screenshots,
+	}, nil
+}
+
+// AppSettings is the resolver for the appSettings field.
+func (r *queryResolver) AppSettings(ctx context.Context) (*model.AppSettings, error) {
+	username, err := r.Settings.Get(ctx, "f95_username")
+	if err != nil {
+		return nil, err
+	}
+	return &model.AppSettings{
+		F95Username:  username,
+		F95Connected: r.F95.IsLoggedIn(),
+	}, nil
 }
 
 // vnToResult converts a VNDB API VN to the GraphQL model.

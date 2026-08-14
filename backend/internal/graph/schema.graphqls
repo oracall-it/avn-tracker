@@ -28,6 +28,7 @@ type Game {
   notes: String!
   description: String!
   vndbId: String
+  f95Id: String
   hasUpdate: Boolean!
   addedAt: Time!
   updatedAt: Time!
@@ -53,6 +54,7 @@ input GameInput {
   notes: String
   description: String
   vndbId: String
+  f95Id: String
 }
 
 type VNDBScreenshot {
@@ -76,11 +78,46 @@ type VNDBPage {
   more: Boolean!
 }
 
+type F95SearchItem {
+  threadId:  String!
+  threadUrl: String!
+  title:     String!
+  version:   String!
+  engine:    String!
+  tags:      [String!]!
+}
+
+type F95SearchResult {
+  results: [F95SearchItem!]!
+}
+
+type F95Game {
+  threadId:    String!
+  threadUrl:   String!
+  title:       String!
+  developer:   String!
+  version:     String!
+  coverUrl:    String!
+  description: String!
+  tags:        [String!]!
+  engine:      String!
+  f95Status:   String!
+  screenshots: [String!]!
+}
+
+type AppSettings {
+  f95Username:  String!
+  f95Connected: Boolean!
+}
+
 type Query {
   games(filter: GameFilter): [Game!]!
   game(id: ID!): Game
   searchVNDB(query: String!, page: Int, adultsOnly: Boolean): VNDBPage!
   getVNDBGame(vndbId: String!): VNDBResult
+  searchF95(query: String!, page: Int): F95SearchResult!
+  getF95Game(threadUrl: String!): F95Game!
+  appSettings: AppSettings!
 }
 
 type Mutation {
@@ -91,4 +128,8 @@ type Mutation {
   syncLatestVersion(id: ID!): Game!
   exportLibrary: String!
   importLibrary(json: String!): Boolean!
+  importFromF95(threadUrl: String!): Game!
+  syncF95Version(id: ID!): Game!
+  setF95Credentials(username: String!, password: String!): Boolean!
+  testF95Connection: Boolean!
 }

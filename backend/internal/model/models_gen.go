@@ -10,6 +10,38 @@ import (
 	"time"
 )
 
+type AppSettings struct {
+	F95Username  string `json:"f95Username"`
+	F95Connected bool   `json:"f95Connected"`
+}
+
+type F95Game struct {
+	ThreadID    string   `json:"threadId"`
+	ThreadURL   string   `json:"threadUrl"`
+	Title       string   `json:"title"`
+	Developer   string   `json:"developer"`
+	Version     string   `json:"version"`
+	CoverURL    string   `json:"coverUrl"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
+	Engine      string   `json:"engine"`
+	F95Status   string   `json:"f95Status"`
+	Screenshots []string `json:"screenshots"`
+}
+
+type F95SearchItem struct {
+	ThreadID  string   `json:"threadId"`
+	ThreadURL string   `json:"threadUrl"`
+	Title     string   `json:"title"`
+	Version   string   `json:"version"`
+	Engine    string   `json:"engine"`
+	Tags      []string `json:"tags"`
+}
+
+type F95SearchResult struct {
+	Results []*F95SearchItem `json:"results"`
+}
+
 type Game struct {
 	ID            string     `json:"id"`
 	Title         string     `json:"title"`
@@ -24,6 +56,7 @@ type Game struct {
 	Notes         string     `json:"notes"`
 	Description   string     `json:"description"`
 	VndbID        *string    `json:"vndbId,omitempty"`
+	F95Id         *string    `json:"f95Id,omitempty"`
 	HasUpdate     bool       `json:"hasUpdate"`
 	AddedAt       time.Time  `json:"addedAt"`
 	UpdatedAt     time.Time  `json:"updatedAt"`
@@ -49,6 +82,7 @@ type GameInput struct {
 	Notes         *string     `json:"notes,omitempty"`
 	Description   *string     `json:"description,omitempty"`
 	VndbID        *string     `json:"vndbId,omitempty"`
+	F95Id         *string     `json:"f95Id,omitempty"`
 }
 
 type Mutation struct {

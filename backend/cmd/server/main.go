@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"avn-tracker/backend/internal/database"
+	"avn-tracker/backend/internal/f95"
 	"avn-tracker/backend/internal/graph"
 	"avn-tracker/backend/internal/graph/generated"
 	"avn-tracker/backend/internal/repository"
@@ -28,17 +29,36 @@ func main() {
 	}
 	defer pool.Close()
 
-	migration, err := os.ReadFile("/app/migrations/001_init.up.sql")
-	if err != nil {
-		log.Fatalf("read migration: %v", err)
+	for _, migrationPath := range []string{
+		"/app/migrations/001_init.up.sql",
+		"/app/migrations/002_f95.up.sql",
+	} {
+		migration, err := os.ReadFile(migrationPath)
+		if err != nil {
+			log.Fatalf("read migration %s: %v", migrationPath, err)
+		}
+		if err := database.RunMigration(ctx, pool, string(migration)); err != nil {
+			log.Fatalf("run migration %s: %v", migrationPath, err)
+		}
 	}
-	if err := database.RunMigration(ctx, pool, string(migration)); err != nil {
-		log.Fatalf("run migration: %v", err)
+
+	settingsRepo := repository.NewSettingsRepo(pool)
+	f95Client := f95.NewClient()
+
+	// Restore F95 session from stored credentials if available.
+	if username, password, err := settingsRepo.GetF95Credentials(ctx); err == nil && username != "" && password != "" {
+		if loginErr := f95Client.Login(ctx, username, password); loginErr != nil {
+			log.Printf("F95Zone auto-login failed: %v", loginErr)
+		} else {
+			log.Println("F95Zone session restored")
+		}
 	}
 
 	resolver := &graph.Resolver{
-		Repo: repository.NewGameRepo(pool),
-		VNDB: vndb.NewClient(),
+		Repo:     repository.NewGameRepo(pool),
+		Settings: settingsRepo,
+		VNDB:     vndb.NewClient(),
+		F95:      f95Client,
 	}
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))

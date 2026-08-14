@@ -37,6 +37,38 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AppSettings struct {
+		F95Connected func(childComplexity int) int
+		F95Username  func(childComplexity int) int
+	}
+
+	F95Game struct {
+		CoverURL    func(childComplexity int) int
+		Description func(childComplexity int) int
+		Developer   func(childComplexity int) int
+		Engine      func(childComplexity int) int
+		F95Status   func(childComplexity int) int
+		Screenshots func(childComplexity int) int
+		Tags        func(childComplexity int) int
+		ThreadID    func(childComplexity int) int
+		ThreadURL   func(childComplexity int) int
+		Title       func(childComplexity int) int
+		Version     func(childComplexity int) int
+	}
+
+	F95SearchItem struct {
+		Engine    func(childComplexity int) int
+		Tags      func(childComplexity int) int
+		ThreadID  func(childComplexity int) int
+		ThreadURL func(childComplexity int) int
+		Title     func(childComplexity int) int
+		Version   func(childComplexity int) int
+	}
+
+	F95SearchResult struct {
+		Results func(childComplexity int) int
+	}
+
 	Game struct {
 		AddedAt       func(childComplexity int) int
 		CoverURL      func(childComplexity int) int
@@ -44,6 +76,7 @@ type ComplexityRoot struct {
 		DevStatus     func(childComplexity int) int
 		Developer     func(childComplexity int) int
 		DownloadURL   func(childComplexity int) int
+		F95Id         func(childComplexity int) int
 		HasUpdate     func(childComplexity int) int
 		ID            func(childComplexity int) int
 		LatestVersion func(childComplexity int) int
@@ -60,16 +93,23 @@ type ComplexityRoot struct {
 		AddGame           func(childComplexity int, input model.GameInput) int
 		DeleteGame        func(childComplexity int, id string) int
 		ExportLibrary     func(childComplexity int) int
+		ImportFromF95     func(childComplexity int, threadURL string) int
 		ImportFromVndb    func(childComplexity int, vndbID string) int
 		ImportLibrary     func(childComplexity int, json string) int
+		SetF95Credentials func(childComplexity int, username string, password string) int
+		SyncF95Version    func(childComplexity int, id string) int
 		SyncLatestVersion func(childComplexity int, id string) int
+		TestF95Connection func(childComplexity int) int
 		UpdateGame        func(childComplexity int, id string, input model.GameInput) int
 	}
 
 	Query struct {
+		AppSettings func(childComplexity int) int
 		Game        func(childComplexity int, id string) int
 		Games       func(childComplexity int, filter *model.GameFilter) int
+		GetF95Game  func(childComplexity int, threadURL string) int
 		GetVNDBGame func(childComplexity int, vndbID string) int
+		SearchF95   func(childComplexity int, query string, page *int) int
 		SearchVndb  func(childComplexity int, query string, page *int, adultsOnly *bool) int
 	}
 
@@ -103,12 +143,19 @@ type MutationResolver interface {
 	SyncLatestVersion(ctx context.Context, id string) (*model.Game, error)
 	ExportLibrary(ctx context.Context) (string, error)
 	ImportLibrary(ctx context.Context, json string) (bool, error)
+	ImportFromF95(ctx context.Context, threadURL string) (*model.Game, error)
+	SyncF95Version(ctx context.Context, id string) (*model.Game, error)
+	SetF95Credentials(ctx context.Context, username string, password string) (bool, error)
+	TestF95Connection(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
 	Games(ctx context.Context, filter *model.GameFilter) ([]*model.Game, error)
 	Game(ctx context.Context, id string) (*model.Game, error)
 	SearchVndb(ctx context.Context, query string, page *int, adultsOnly *bool) (*model.VNDBPage, error)
 	GetVNDBGame(ctx context.Context, vndbID string) (*model.VNDBResult, error)
+	SearchF95(ctx context.Context, query string, page *int) (*model.F95SearchResult, error)
+	GetF95Game(ctx context.Context, threadURL string) (*model.F95Game, error)
+	AppSettings(ctx context.Context) (*model.AppSettings, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -124,6 +171,130 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AppSettings.f95Connected":
+		if e.ComplexityRoot.AppSettings.F95Connected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AppSettings.F95Connected(childComplexity), true
+	case "AppSettings.f95Username":
+		if e.ComplexityRoot.AppSettings.F95Username == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AppSettings.F95Username(childComplexity), true
+
+	case "F95Game.coverUrl":
+		if e.ComplexityRoot.F95Game.CoverURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.CoverURL(childComplexity), true
+	case "F95Game.description":
+		if e.ComplexityRoot.F95Game.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Description(childComplexity), true
+	case "F95Game.developer":
+		if e.ComplexityRoot.F95Game.Developer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Developer(childComplexity), true
+	case "F95Game.engine":
+		if e.ComplexityRoot.F95Game.Engine == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Engine(childComplexity), true
+	case "F95Game.f95Status":
+		if e.ComplexityRoot.F95Game.F95Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.F95Status(childComplexity), true
+	case "F95Game.screenshots":
+		if e.ComplexityRoot.F95Game.Screenshots == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Screenshots(childComplexity), true
+	case "F95Game.tags":
+		if e.ComplexityRoot.F95Game.Tags == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Tags(childComplexity), true
+	case "F95Game.threadId":
+		if e.ComplexityRoot.F95Game.ThreadID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.ThreadID(childComplexity), true
+	case "F95Game.threadUrl":
+		if e.ComplexityRoot.F95Game.ThreadURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.ThreadURL(childComplexity), true
+	case "F95Game.title":
+		if e.ComplexityRoot.F95Game.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Title(childComplexity), true
+	case "F95Game.version":
+		if e.ComplexityRoot.F95Game.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95Game.Version(childComplexity), true
+
+	case "F95SearchItem.engine":
+		if e.ComplexityRoot.F95SearchItem.Engine == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchItem.Engine(childComplexity), true
+	case "F95SearchItem.tags":
+		if e.ComplexityRoot.F95SearchItem.Tags == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchItem.Tags(childComplexity), true
+	case "F95SearchItem.threadId":
+		if e.ComplexityRoot.F95SearchItem.ThreadID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchItem.ThreadID(childComplexity), true
+	case "F95SearchItem.threadUrl":
+		if e.ComplexityRoot.F95SearchItem.ThreadURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchItem.ThreadURL(childComplexity), true
+	case "F95SearchItem.title":
+		if e.ComplexityRoot.F95SearchItem.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchItem.Title(childComplexity), true
+	case "F95SearchItem.version":
+		if e.ComplexityRoot.F95SearchItem.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchItem.Version(childComplexity), true
+
+	case "F95SearchResult.results":
+		if e.ComplexityRoot.F95SearchResult.Results == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchResult.Results(childComplexity), true
 
 	case "Game.addedAt":
 		if e.ComplexityRoot.Game.AddedAt == nil {
@@ -161,6 +332,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Game.DownloadURL(childComplexity), true
+	case "Game.f95Id":
+		if e.ComplexityRoot.Game.F95Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Game.F95Id(childComplexity), true
 	case "Game.hasUpdate":
 		if e.ComplexityRoot.Game.HasUpdate == nil {
 			break
@@ -250,6 +427,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ExportLibrary(childComplexity), true
+	case "Mutation.importFromF95":
+		if e.ComplexityRoot.Mutation.ImportFromF95 == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_importFromF95_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ImportFromF95(childComplexity, args["threadUrl"].(string)), true
 	case "Mutation.importFromVNDB":
 		if e.ComplexityRoot.Mutation.ImportFromVndb == nil {
 			break
@@ -272,6 +460,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ImportLibrary(childComplexity, args["json"].(string)), true
+	case "Mutation.setF95Credentials":
+		if e.ComplexityRoot.Mutation.SetF95Credentials == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setF95Credentials_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetF95Credentials(childComplexity, args["username"].(string), args["password"].(string)), true
+	case "Mutation.syncF95Version":
+		if e.ComplexityRoot.Mutation.SyncF95Version == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_syncF95Version_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SyncF95Version(childComplexity, args["id"].(string)), true
 	case "Mutation.syncLatestVersion":
 		if e.ComplexityRoot.Mutation.SyncLatestVersion == nil {
 			break
@@ -283,6 +493,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SyncLatestVersion(childComplexity, args["id"].(string)), true
+	case "Mutation.testF95Connection":
+		if e.ComplexityRoot.Mutation.TestF95Connection == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.TestF95Connection(childComplexity), true
 	case "Mutation.updateGame":
 		if e.ComplexityRoot.Mutation.UpdateGame == nil {
 			break
@@ -295,6 +511,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UpdateGame(childComplexity, args["id"].(string), args["input"].(model.GameInput)), true
 
+	case "Query.appSettings":
+		if e.ComplexityRoot.Query.AppSettings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AppSettings(childComplexity), true
 	case "Query.game":
 		if e.ComplexityRoot.Query.Game == nil {
 			break
@@ -317,6 +539,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Games(childComplexity, args["filter"].(*model.GameFilter)), true
+	case "Query.getF95Game":
+		if e.ComplexityRoot.Query.GetF95Game == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getF95Game_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GetF95Game(childComplexity, args["threadUrl"].(string)), true
 	case "Query.getVNDBGame":
 		if e.ComplexityRoot.Query.GetVNDBGame == nil {
 			break
@@ -329,6 +562,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.GetVNDBGame(childComplexity, args["vndbId"].(string)), true
 
+	case "Query.searchF95":
+		if e.ComplexityRoot.Query.SearchF95 == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchF95_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SearchF95(childComplexity, args["query"].(string), args["page"].(*int)), true
 	case "Query.searchVNDB":
 		if e.ComplexityRoot.Query.SearchVndb == nil {
 			break
@@ -531,6 +775,7 @@ type Game {
   notes: String!
   description: String!
   vndbId: String
+  f95Id: String
   hasUpdate: Boolean!
   addedAt: Time!
   updatedAt: Time!
@@ -556,6 +801,7 @@ input GameInput {
   notes: String
   description: String
   vndbId: String
+  f95Id: String
 }
 
 type VNDBScreenshot {
@@ -579,11 +825,46 @@ type VNDBPage {
   more: Boolean!
 }
 
+type F95SearchItem {
+  threadId:  String!
+  threadUrl: String!
+  title:     String!
+  version:   String!
+  engine:    String!
+  tags:      [String!]!
+}
+
+type F95SearchResult {
+  results: [F95SearchItem!]!
+}
+
+type F95Game {
+  threadId:    String!
+  threadUrl:   String!
+  title:       String!
+  developer:   String!
+  version:     String!
+  coverUrl:    String!
+  description: String!
+  tags:        [String!]!
+  engine:      String!
+  f95Status:   String!
+  screenshots: [String!]!
+}
+
+type AppSettings {
+  f95Username:  String!
+  f95Connected: Boolean!
+}
+
 type Query {
   games(filter: GameFilter): [Game!]!
   game(id: ID!): Game
   searchVNDB(query: String!, page: Int, adultsOnly: Boolean): VNDBPage!
   getVNDBGame(vndbId: String!): VNDBResult
+  searchF95(query: String!, page: Int): F95SearchResult!
+  getF95Game(threadUrl: String!): F95Game!
+  appSettings: AppSettings!
 }
 
 type Mutation {
@@ -594,6 +875,10 @@ type Mutation {
   syncLatestVersion(id: ID!): Game!
   exportLibrary: String!
   importLibrary(json: String!): Boolean!
+  importFromF95(threadUrl: String!): Game!
+  syncF95Version(id: ID!): Game!
+  setF95Credentials(username: String!, password: String!): Boolean!
+  testF95Connection: Boolean!
 }
 `, BuiltIn: false},
 }
@@ -602,6 +887,70 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // childFields_* functions provide shared child field context lookups.
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
+
+func (ec *executionContext) childFields_AppSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "f95Username":
+		return ec.fieldContext_AppSettings_f95Username(ctx, field)
+	case "f95Connected":
+		return ec.fieldContext_AppSettings_f95Connected(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AppSettings", field.Name)
+}
+
+func (ec *executionContext) childFields_F95Game(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "threadId":
+		return ec.fieldContext_F95Game_threadId(ctx, field)
+	case "threadUrl":
+		return ec.fieldContext_F95Game_threadUrl(ctx, field)
+	case "title":
+		return ec.fieldContext_F95Game_title(ctx, field)
+	case "developer":
+		return ec.fieldContext_F95Game_developer(ctx, field)
+	case "version":
+		return ec.fieldContext_F95Game_version(ctx, field)
+	case "coverUrl":
+		return ec.fieldContext_F95Game_coverUrl(ctx, field)
+	case "description":
+		return ec.fieldContext_F95Game_description(ctx, field)
+	case "tags":
+		return ec.fieldContext_F95Game_tags(ctx, field)
+	case "engine":
+		return ec.fieldContext_F95Game_engine(ctx, field)
+	case "f95Status":
+		return ec.fieldContext_F95Game_f95Status(ctx, field)
+	case "screenshots":
+		return ec.fieldContext_F95Game_screenshots(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type F95Game", field.Name)
+}
+
+func (ec *executionContext) childFields_F95SearchItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "threadId":
+		return ec.fieldContext_F95SearchItem_threadId(ctx, field)
+	case "threadUrl":
+		return ec.fieldContext_F95SearchItem_threadUrl(ctx, field)
+	case "title":
+		return ec.fieldContext_F95SearchItem_title(ctx, field)
+	case "version":
+		return ec.fieldContext_F95SearchItem_version(ctx, field)
+	case "engine":
+		return ec.fieldContext_F95SearchItem_engine(ctx, field)
+	case "tags":
+		return ec.fieldContext_F95SearchItem_tags(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type F95SearchItem", field.Name)
+}
+
+func (ec *executionContext) childFields_F95SearchResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "results":
+		return ec.fieldContext_F95SearchResult_results(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type F95SearchResult", field.Name)
+}
 
 func (ec *executionContext) childFields_Game(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
@@ -631,6 +980,8 @@ func (ec *executionContext) childFields_Game(ctx context.Context, field graphql.
 		return ec.fieldContext_Game_description(ctx, field)
 	case "vndbId":
 		return ec.fieldContext_Game_vndbId(ctx, field)
+	case "f95Id":
+		return ec.fieldContext_Game_f95Id(ctx, field)
 	case "hasUpdate":
 		return ec.fieldContext_Game_hasUpdate(ctx, field)
 	case "addedAt":
@@ -827,6 +1178,20 @@ func (ec *executionContext) field_Mutation_deleteGame_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_importFromF95_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "threadUrl",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["threadUrl"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_importFromVNDB_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -852,6 +1217,42 @@ func (ec *executionContext) field_Mutation_importLibrary_args(ctx context.Contex
 		return nil, err
 	}
 	args["json"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setF95Credentials_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "username",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["username"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "password",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_syncF95Version_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -933,6 +1334,20 @@ func (ec *executionContext) field_Query_games_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getF95Game_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "threadUrl",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["threadUrl"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getVNDBGame_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -944,6 +1359,28 @@ func (ec *executionContext) field_Query_getVNDBGame_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["vndbId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_searchF95_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg1
 	return args, nil
 }
 
@@ -1040,6 +1477,475 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AppSettings_f95Username(ctx context.Context, field graphql.CollectedField, obj *model.AppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AppSettings_f95Username(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.F95Username, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AppSettings_f95Username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AppSettings", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AppSettings_f95Connected(ctx context.Context, field graphql.CollectedField, obj *model.AppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AppSettings_f95Connected(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.F95Connected, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AppSettings_f95Connected(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AppSettings", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_threadId(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_threadId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ThreadID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_threadId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_threadUrl(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_threadUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ThreadURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_threadUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_title(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_developer(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_developer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Developer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_developer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_version(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_coverUrl(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_coverUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CoverURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_coverUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_description(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_tags(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_tags(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tags, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_engine(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_engine(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Engine, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_engine(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_f95Status(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_f95Status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.F95Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_f95Status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95Game_screenshots(ctx context.Context, field graphql.CollectedField, obj *model.F95Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95Game_screenshots(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Screenshots, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95Game_screenshots(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchItem_threadId(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchItem_threadId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ThreadID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchItem_threadId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchItem_threadUrl(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchItem_threadUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ThreadURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchItem_threadUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchItem_title(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchItem_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchItem_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchItem_version(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchItem_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchItem_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchItem_engine(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchItem_engine(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Engine, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchItem_engine(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchItem_tags(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchItem_tags(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tags, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchItem_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _F95SearchResult_results(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchResult_results(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Results, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.F95SearchItem) graphql.Marshaler {
+			return ec.marshalNF95SearchItem2ᚕᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchItemᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchResult_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "F95SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_F95SearchItem(ctx, field)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Game_id(ctx context.Context, field graphql.CollectedField, obj *model.Game) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -1337,6 +2243,29 @@ func (ec *executionContext) _Game_vndbId(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext_Game_vndbId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Game", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Game_f95Id(ctx context.Context, field graphql.CollectedField, obj *model.Game) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Game_f95Id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.F95Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Game_f95Id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Game", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -1696,6 +2625,161 @@ func (ec *executionContext) fieldContext_Mutation_importLibrary(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_importFromF95(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_importFromF95(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ImportFromF95(ctx, fc.Args["threadUrl"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Game) graphql.Marshaler {
+			return ec.marshalNGame2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐGame(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_importFromF95(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Game(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_importFromF95_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_syncF95Version(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_syncF95Version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SyncF95Version(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Game) graphql.Marshaler {
+			return ec.marshalNGame2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐGame(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_syncF95Version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Game(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_syncF95Version_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setF95Credentials(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setF95Credentials(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetF95Credentials(ctx, fc.Args["username"].(string), fc.Args["password"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setF95Credentials(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setF95Credentials_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_testF95Connection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_testF95Connection(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().TestF95Connection(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_testF95Connection(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Query_games(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1868,6 +2952,126 @@ func (ec *executionContext) fieldContext_Query_getVNDBGame(ctx context.Context, 
 	if fc.Args, err = ec.field_Query_getVNDBGame_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchF95(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_searchF95(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SearchF95(ctx, fc.Args["query"].(string), fc.Args["page"].(*int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.F95SearchResult) graphql.Marshaler {
+			return ec.marshalNF95SearchResult2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_searchF95(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_F95SearchResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchF95_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getF95Game(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_getF95Game(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GetF95Game(ctx, fc.Args["threadUrl"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.F95Game) graphql.Marshaler {
+			return ec.marshalNF95Game2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95Game(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_getF95Game(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_F95Game(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getF95Game_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_appSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_appSettings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().AppSettings(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AppSettings) graphql.Marshaler {
+			return ec.marshalNAppSettings2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐAppSettings(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_appSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AppSettings(ctx, field)
+		},
 	}
 	return fc, nil
 }
@@ -3363,7 +4567,7 @@ func (ec *executionContext) unmarshalInputGameInput(ctx context.Context, obj any
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"title", "developer", "coverUrl", "status", "devStatus", "myVersion", "latestVersion", "downloadUrl", "tags", "notes", "description", "vndbId"}
+	fieldsInOrder := [...]string{"title", "developer", "coverUrl", "status", "devStatus", "myVersion", "latestVersion", "downloadUrl", "tags", "notes", "description", "vndbId", "f95Id"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3454,6 +4658,13 @@ func (ec *executionContext) unmarshalInputGameInput(ctx context.Context, obj any
 				return it, err
 			}
 			it.VndbID = data
+		case "f95Id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("f95Id"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.F95Id = data
 		}
 	}
 	return it, nil
@@ -3466,6 +4677,242 @@ func (ec *executionContext) unmarshalInputGameInput(ctx context.Context, obj any
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var appSettingsImplementors = []string{"AppSettings"}
+
+func (ec *executionContext) _AppSettings(ctx context.Context, sel ast.SelectionSet, obj *model.AppSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appSettingsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppSettings")
+		case "f95Username":
+			out.Values[i] = ec._AppSettings_f95Username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "f95Connected":
+			out.Values[i] = ec._AppSettings_f95Connected(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var f95GameImplementors = []string{"F95Game"}
+
+func (ec *executionContext) _F95Game(ctx context.Context, sel ast.SelectionSet, obj *model.F95Game) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, f95GameImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("F95Game")
+		case "threadId":
+			out.Values[i] = ec._F95Game_threadId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "threadUrl":
+			out.Values[i] = ec._F95Game_threadUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._F95Game_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "developer":
+			out.Values[i] = ec._F95Game_developer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._F95Game_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "coverUrl":
+			out.Values[i] = ec._F95Game_coverUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._F95Game_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tags":
+			out.Values[i] = ec._F95Game_tags(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "engine":
+			out.Values[i] = ec._F95Game_engine(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "f95Status":
+			out.Values[i] = ec._F95Game_f95Status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "screenshots":
+			out.Values[i] = ec._F95Game_screenshots(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var f95SearchItemImplementors = []string{"F95SearchItem"}
+
+func (ec *executionContext) _F95SearchItem(ctx context.Context, sel ast.SelectionSet, obj *model.F95SearchItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, f95SearchItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("F95SearchItem")
+		case "threadId":
+			out.Values[i] = ec._F95SearchItem_threadId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "threadUrl":
+			out.Values[i] = ec._F95SearchItem_threadUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._F95SearchItem_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._F95SearchItem_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "engine":
+			out.Values[i] = ec._F95SearchItem_engine(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tags":
+			out.Values[i] = ec._F95SearchItem_tags(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var f95SearchResultImplementors = []string{"F95SearchResult"}
+
+func (ec *executionContext) _F95SearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.F95SearchResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, f95SearchResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("F95SearchResult")
+		case "results":
+			out.Values[i] = ec._F95SearchResult_results(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var gameImplementors = []string{"Game"}
 
@@ -3540,6 +4987,8 @@ func (ec *executionContext) _Game(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "vndbId":
 			out.Values[i] = ec._Game_vndbId(ctx, field, obj)
+		case "f95Id":
+			out.Values[i] = ec._Game_f95Id(ctx, field, obj)
 		case "hasUpdate":
 			out.Values[i] = ec._Game_hasUpdate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3642,6 +5091,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "importLibrary":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_importLibrary(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "importFromF95":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_importFromF95(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncF95Version":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncF95Version(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setF95Credentials":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setF95Credentials(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "testF95Connection":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_testF95Connection(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3761,6 +5238,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getVNDBGame(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "searchF95":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchF95(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getF95Game":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getF95Game(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "appSettings":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_appSettings(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -4298,6 +5841,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAppSettings2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐAppSettings(ctx context.Context, sel ast.SelectionSet, v model.AppSettings) graphql.Marshaler {
+	return ec._AppSettings(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAppSettings2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐAppSettings(ctx context.Context, sel ast.SelectionSet, v *model.AppSettings) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AppSettings(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4322,6 +5879,60 @@ func (ec *executionContext) unmarshalNDevStatus2avnᚑtrackerᚋbackendᚋintern
 
 func (ec *executionContext) marshalNDevStatus2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐDevStatus(ctx context.Context, sel ast.SelectionSet, v model.DevStatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNF95Game2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95Game(ctx context.Context, sel ast.SelectionSet, v model.F95Game) graphql.Marshaler {
+	return ec._F95Game(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNF95Game2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95Game(ctx context.Context, sel ast.SelectionSet, v *model.F95Game) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._F95Game(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNF95SearchItem2ᚕᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.F95SearchItem) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNF95SearchItem2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchItem(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNF95SearchItem2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchItem(ctx context.Context, sel ast.SelectionSet, v *model.F95SearchItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._F95SearchItem(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNF95SearchResult2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchResult(ctx context.Context, sel ast.SelectionSet, v model.F95SearchResult) graphql.Marshaler {
+	return ec._F95SearchResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNF95SearchResult2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐF95SearchResult(ctx context.Context, sel ast.SelectionSet, v *model.F95SearchResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._F95SearchResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNGame2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐGame(ctx context.Context, sel ast.SelectionSet, v model.Game) graphql.Marshaler {
