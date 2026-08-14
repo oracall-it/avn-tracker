@@ -4,7 +4,7 @@ export const GAME_FIELDS = gql`
   fragment GameFields on Game {
     id title developer coverUrl status devStatus
     myVersion latestVersion downloadUrl tags notes description
-    vndbId hasUpdate addedAt updatedAt
+    vndbId f95Id hasUpdate addedAt updatedAt
   }
 `
 
@@ -38,5 +38,27 @@ export const GET_VNDB_GAME = gql`
       vndbId title developer coverUrl tags description
       screenshots { thumbnail url }
     }
+  }
+`
+
+export const SEARCH_F95 = gql`
+  query SearchF95($query: String!, $page: Int) {
+    searchF95(query: $query, page: $page) {
+      results { threadId threadUrl title version engine tags }
+    }
+  }
+`
+
+export const GET_F95_GAME = gql`
+  query GetF95Game($threadUrl: String!) {
+    getF95Game(threadUrl: $threadUrl) {
+      threadId threadUrl title developer version coverUrl description tags engine f95Status screenshots
+    }
+  }
+`
+
+export const GET_APP_SETTINGS = gql`
+  query AppSettings {
+    appSettings { f95Username f95Connected }
   }
 `

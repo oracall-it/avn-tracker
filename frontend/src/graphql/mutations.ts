@@ -46,3 +46,29 @@ export const IMPORT_LIBRARY = gql`
     importLibrary(json: $json)
   }
 `
+
+export const IMPORT_FROM_F95 = gql`
+  ${GAME_FIELDS}
+  mutation ImportFromF95($threadUrl: String!) {
+    importFromF95(threadUrl: $threadUrl) { ...GameFields }
+  }
+`
+
+export const SYNC_F95_VERSION = gql`
+  ${GAME_FIELDS}
+  mutation SyncF95Version($id: ID!) {
+    syncF95Version(id: $id) { ...GameFields }
+  }
+`
+
+export const SET_F95_CREDENTIALS = gql`
+  mutation SetF95Credentials($username: String!, $password: String!) {
+    setF95Credentials(username: $username, password: $password)
+  }
+`
+
+export const TEST_F95_CONNECTION = gql`
+  mutation TestF95Connection {
+    testF95Connection
+  }
+`

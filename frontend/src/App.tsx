@@ -6,6 +6,7 @@ import { Library } from './pages/Library'
 import { Discover } from './pages/Discover'
 import { GameDetail } from './pages/GameDetail'
 import { VNDBGameDetail } from './pages/VNDBGameDetail'
+import { F95GameDetail } from './pages/F95GameDetail'
 import { Settings } from './pages/Settings'
 
 const client = new ApolloClient({
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="/discover" element={<Discover />} />
             <Route path="/game/:id" element={<GameDetail />} />
             <Route path="/discover/game/:vndbId" element={<VNDBGameDetail />} />
+            <Route path="/discover/f95/:threadUrl" element={<F95GameDetail />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
