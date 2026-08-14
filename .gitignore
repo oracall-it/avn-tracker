@@ -9,6 +9,12 @@ backend/server
 # Go build cache
 backend/graph/generated/
 
+# air live-reload artifacts
+backend/tmp/
+
+# Third-party library vendored locally — not part of the project
+F95API/
+
 # TypeScript build info
 *.tsbuildinfo
 

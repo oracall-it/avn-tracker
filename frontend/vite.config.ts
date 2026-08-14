@@ -5,8 +5,13 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: true,
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
     proxy: {
-      '/graphql': 'http://localhost:8080',
+      '/graphql': process.env.API_URL || 'http://localhost:8080',
     },
   },
 })
