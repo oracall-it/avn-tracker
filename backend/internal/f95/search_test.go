@@ -33,32 +33,32 @@ func TestCleanBrackets(t *testing.T) {
 	}
 }
 
-// ─── versionBracketRe ────────────────────────────────────────────────────────
+// ─── extractVersion ──────────────────────────────────────────────────────────
 
-func TestVersionBracketRe(t *testing.T) {
+func TestExtractVersion(t *testing.T) {
 	cases := []struct {
 		input string
-		want  string // expected capture group 1, or "" for no match
+		want  string
 	}{
-		{"Game Title [v1.0]", "1.0"},
-		{"Game Title [v1.0.3]", "1.0.3"},
-		{"Game [Version 2.1]", "2.1"},
-		{"Game [v0.21.0 Public]", "0.21.0 Public"},
+		{"Game Title [v1.0]", "v1.0"},
+		{"Game Title [v1.0.3]", "v1.0.3"},
+		{"Game [Version 2.1]", "Version 2.1"},
+		{"Game [v0.21.0 Public]", "v0.21.0 Public"},
 		{"Game [1.2.3]", "1.2.3"},
-		{"Game Title", ""},    // no brackets
-		{"Game [Abandoned]", ""},  // no version pattern
-		{"Game [VN]", ""},         // label, not version
+		{"[Ren'Py] Game [Ep. 3]", "Ep. 3"},
+		{"[Unity] Game [Chapter 5 Part 2]", "Chapter 5 Part 2"},
+		{"[Unity] [Abandoned] Game [Final]", "Final"},
+		{"[Ren'Py] [Completed] Game [v2.0 SE]", "v2.0 SE"},
+		{"Game Title", ""},           // no brackets
+		{"[Unity] Game", ""},         // only engine label
+		{"[Unity] [Abandoned] Game", ""},  // engine + status, no version
 	}
 
 	for _, c := range cases {
 		t.Run(c.input, func(t *testing.T) {
-			m := versionBracketRe.FindStringSubmatch(c.input)
-			got := ""
-			if len(m) > 1 {
-				got = m[1]
-			}
+			got := extractVersion(c.input)
 			if got != c.want {
-				t.Errorf("versionBracketRe on %q: capture = %q; want %q", c.input, got, c.want)
+				t.Errorf("extractVersion(%q) = %q; want %q", c.input, got, c.want)
 			}
 		})
 	}

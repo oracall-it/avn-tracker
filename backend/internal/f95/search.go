@@ -215,14 +215,7 @@ func (c *Client) Search(ctx context.Context, query string, page int) (*SearchPag
 		titleClone.Find(".label, .labelLink").Remove()
 		rawTitle := strings.TrimSpace(titleClone.Text())
 
-		version := ""
-		if m := versionBracketRe.FindStringSubmatch(rawTitle); len(m) > 1 {
-			v := strings.TrimSpace(m[1])
-			if !strings.HasPrefix(strings.ToLower(v), "v") {
-				v = "v" + v
-			}
-			version = v
-		}
+		version := extractVersion(rawTitle)
 
 		title := cleanBrackets(rawTitle)
 

@@ -15,11 +15,8 @@ var (
 	// Supports both slug.ID format (/threads/title.12345/) and bare ID (/threads/12345/).
 	threadIDRe = regexp.MustCompile(`/threads/(?:[^/]*\.)?(\d+)`)
 
-	// Matches version bracket: [v1.0.0], [v1.0 Public], [Version 1.2], etc.
-	versionBracketRe = regexp.MustCompile(`(?i)\[v?(?:ersion\s*)?(\d[\d.]*[a-zA-Z]?[\d.]*[^\]]*)\]`)
-
-	// Matches standalone [Final] when no numeric version is present.
-	finalVersionRe = regexp.MustCompile(`(?i)\[Final\]`)
+	// Matches every [...] group in a title string.
+	allBracketsRe = regexp.MustCompile(`\[([^\]]+)\]`)
 
 	// Known engine prefix labels used in F95Zone thread titles.
 	engineLabels = map[string]bool{
@@ -31,6 +28,11 @@ var (
 	// Status labels.
 	completeLabels  = map[string]bool{"completed": true, "complete": true}
 	abandonedLabels = map[string]bool{"abandoned": true, "on hold": true, "onhold": true}
+
+	// Content-type labels that appear in brackets but are not version strings.
+	contentTypeLabels = map[string]bool{
+		"vn": true, "game": true, "mod": true, "asset": true, "comic": true, "animation": true,
+	}
 
 	// Regexes for HTML → plain-text conversion.
 	htmlTagRe  = regexp.MustCompile(`<[^>]+>`)
@@ -44,6 +46,26 @@ var (
 		"changelog", "change-log", "fan art", "other games",
 	}
 )
+
+// extractVersion picks the version string from an F95Zone thread title by collecting
+// all [...] bracket contents, discarding known non-version labels (engine, status,
+// content type), and returning the last remaining bracket value.
+// This accepts any format: [v1.2], [Ep. 3], [Chapter 5 Part 2], [Final], etc.
+func extractVersion(rawTitle string) string {
+	var candidates []string
+	for _, m := range allBracketsRe.FindAllStringSubmatch(rawTitle, -1) {
+		content := strings.TrimSpace(m[1])
+		lower := strings.ToLower(content)
+		if engineLabels[lower] || completeLabels[lower] || abandonedLabels[lower] || contentTypeLabels[lower] {
+			continue
+		}
+		candidates = append(candidates, content)
+	}
+	if len(candidates) == 0 {
+		return ""
+	}
+	return candidates[len(candidates)-1]
+}
 
 // GetGame fetches and parses a single F95Zone thread page.
 func (c *Client) GetGame(ctx context.Context, threadURL string) (*Game, error) {
@@ -74,17 +96,7 @@ func (c *Client) GetGame(ctx context.Context, threadURL string) (*Game, error) {
 	rawTitle := strings.TrimSpace(titleClone.Text())
 
 	// --- Version ---
-	version := ""
-	if m := versionBracketRe.FindStringSubmatch(rawTitle); len(m) > 1 {
-		v := strings.TrimSpace(m[1])
-		if !strings.HasPrefix(strings.ToLower(v), "v") {
-			v = "v" + v
-		}
-		version = v
-	}
-	if version == "" && finalVersionRe.MatchString(rawTitle) {
-		version = "Final"
-	}
+	version := extractVersion(rawTitle)
 	title := cleanBrackets(rawTitle)
 
 	// --- Engine + Status from h1 labels ---
