@@ -38,8 +38,10 @@ Track games, monitor version updates, and discover new titles — all without le
 
 - Record the version you last played vs. the latest known release
 - Visual update badge when a newer version is available
-- One-click sync to pull the latest release from VNDB
+- One-click sync to pull the latest release from VNDB or F95Zone
 - Smart version extraction from VNDB release titles
+- Automatic weekly background sync for all F95Zone games
+- Manual **Sync all** in Settings to check every F95Zone game at once
 
 </td>
 </tr>
@@ -50,8 +52,9 @@ Track games, monitor version updates, and discover new titles — all without le
 
 - Browse and search visual novels from **VNDB** in real time
 - Browse and search adult games from **F95Zone** (requires account credentials)
+- Paginated F95Zone search — navigate across multiple pages of results
 - Debounced live search — no button required
-- In-app detail pages for both VNDB and F95Zone with description, screenshots, and tags
+- In-app detail pages for both VNDB and F95Zone with description, screenshots, tags, and engine info
 
 </td>
 <td>
@@ -59,10 +62,11 @@ Track games, monitor version updates, and discover new titles — all without le
 ### ⚙️ Settings & Everything Else
 
 - F95Zone credentials management (username + password, stored locally)
+- **Sync all** button to check every F95Zone game for updates in one go
 - Export full library to JSON for backup or migration
 - Import JSON to restore library on any AVN Tracker instance
 - Light and dark theme with toggle (warm stone palette)
-- Screenshot gallery with lightbox on game detail pages
+- Screenshot gallery with lightbox — navigate between images with arrow buttons or ← → Esc
 - VNDB rate limiting + response cache to respect API usage policy
 
 </td>
@@ -427,13 +431,13 @@ docker compose up --build -d
 
 ### Roadmap / areas that need work
 
-- [ ] Automatic background polling — sync all games on a schedule
+- [x] Automatic background polling — sync all games on a schedule
+- [x] F95Zone pagination on search results
 - [ ] Multiple download links per game (mirrors, Patreon, itch.io)
 - [ ] Personal rating / score field
 - [ ] Mobile layout improvements
 - [ ] User-configurable adult content tag IDs
 - [ ] F95Zone cover image scraping (currently uses engine-gradient placeholder)
-- [ ] F95Zone pagination on search results
 
 ---
 

@@ -169,6 +169,16 @@ test.describe('Game Detail page', () => {
     expect(overflowAfter).not.toBe('hidden')
   })
 
+  // ── Screenshot carousel ───────────────────────────────────────────────────
+
+  test('screenshots section hidden when game has no screenshots', async ({ page, request }) => {
+    const game = await createTestGame(request)
+    await page.goto('/')
+    await openDetail(page, game.title)
+    // Library games added manually have no screenshots — section must not appear.
+    await expect(page.getByRole('heading', { name: /screenshots/i })).not.toBeVisible()
+  })
+
   // ── Delete ────────────────────────────────────────────────────────────────
 
   test('delete from detail page redirects to library', async ({ page, request }) => {

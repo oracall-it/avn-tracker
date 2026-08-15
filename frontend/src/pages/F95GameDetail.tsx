@@ -97,6 +97,7 @@ export function F95GameDetail() {
         tags={game.tags}
         screenshots={(game.screenshots ?? []).map(src => ({ thumbnail: src, url: src }))}
         externalUrl={decodedUrl}
+        engine={game.engine || undefined}
         libraryGame={libraryGame}
         onEdit={() => setShowEdit(true)}
         onDelete={handleDelete}

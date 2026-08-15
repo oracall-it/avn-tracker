@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Pencil,
   Trash2,
+  Cpu,
 } from "lucide-react";
 import { ScreenshotCarousel } from "./ScreenshotCarousel";
 import { UpdateBadge } from "./UpdateBadge";
@@ -51,6 +52,7 @@ export interface GameDetailViewProps {
   tags: string[];
   screenshots: Screenshot[];
   externalUrl?: string;
+  engine?: string;
 
   vndbId?: string;
 
@@ -92,6 +94,7 @@ export function GameDetailView({
   tags,
   screenshots,
   externalUrl,
+  engine,
   vndbId,
   libraryGame,
   onEdit,
@@ -224,12 +227,28 @@ export function GameDetailView({
                     {DEV_STATUS_LABELS[libraryGame.devStatus]}
                   </span>
                   <UpdateBadge hasUpdate={libraryGame.hasUpdate} />
+                  {engine && (
+                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 rounded-full border border-stone-200 dark:border-stone-700">
+                      <Cpu size={11} />
+                      {engine}
+                    </span>
+                  )}
                 </div>
-              ) : SOURCE_LABEL[source] ? (
-                <p className="text-xs font-bold text-stone-500 dark:text-stone-500 uppercase tracking-widest mb-1">
-                  {SOURCE_LABEL[source]}
-                </p>
-              ) : null}
+              ) : (
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {SOURCE_LABEL[source] && (
+                    <p className="text-xs font-bold text-stone-500 dark:text-stone-500 uppercase tracking-widest">
+                      {SOURCE_LABEL[source]}
+                    </p>
+                  )}
+                  {engine && (
+                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 rounded-full border border-stone-200 dark:border-stone-700">
+                      <Cpu size={11} />
+                      {engine}
+                    </span>
+                  )}
+                </div>
+              )}
               <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100 leading-tight">
                 {title}
               </h1>

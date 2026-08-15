@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react'
 
 interface Screenshot {
   thumbnail: string
@@ -12,12 +12,23 @@ interface Props {
 
 export function ScreenshotCarousel({ screenshots }: Props) {
   const [current, setCurrent] = useState(0)
-  const [lightbox, setLightbox] = useState<string | null>(null)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [loaded, setLoaded] = useState<Set<number>>(new Set())
 
   const n = screenshots.length
   const prev = useCallback(() => setCurrent(i => (i - 1 + n) % n), [n])
   const next = useCallback(() => setCurrent(i => (i + 1) % n), [n])
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prev()
+      else if (e.key === 'ArrowRight') next()
+      else if (e.key === 'Escape') setLightboxOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightboxOpen, prev, next])
 
   if (n === 0) return null
 
@@ -78,7 +89,7 @@ export function ScreenshotCarousel({ screenshots }: Props) {
 
   const handleSlideClick = (i: number) => {
     const d = diff(i)
-    if (d === 0) setLightbox(screenshots[i].url)
+    if (d === 0) setLightboxOpen(true)
     else if (d === 1) next()
     else if (d === -1) prev()
   }
@@ -166,24 +177,56 @@ export function ScreenshotCarousel({ screenshots }: Props) {
       )}
 
       {/* Lightbox */}
-      {lightbox && (
+      {lightboxOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-sm flex items-center justify-center p-6"
-          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-sm flex flex-col"
+          onClick={() => setLightboxOpen(false)}
         >
-          <img
-            src={lightbox}
-            alt="Screenshot"
-            className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
-            onClick={e => e.stopPropagation()}
-          />
-          <button
-            onClick={() => setLightbox(null)}
-            className="absolute top-4 right-4 p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors text-lg leading-none"
-            aria-label="Close"
-          >
-            ✕
-          </button>
+          {/* Top bar: counter + close */}
+          <div className="flex-none flex items-center justify-between px-4 pt-4 pb-2">
+            <span className="text-white/70 text-sm font-medium tabular-nums select-none">
+              {n > 1 ? `${current + 1} / ${n}` : ''}
+            </span>
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Image row: prev — image — next */}
+          <div className="flex flex-1 items-center min-h-0 gap-3 px-4 pb-4">
+            {/* Prev button — always takes up space so image stays centered */}
+            <button
+              onClick={e => { e.stopPropagation(); prev() }}
+              disabled={n <= 1}
+              className="flex-none p-3 bg-white/10 hover:bg-amber-500 disabled:opacity-0 disabled:pointer-events-none rounded-full text-white transition-colors"
+              aria-label="Previous screenshot"
+            >
+              <ChevronLeft size={22} />
+            </button>
+
+            {/* Image — fills remaining space, never touches buttons */}
+            <div className="flex flex-1 items-center justify-center min-h-0 h-full" onClick={e => e.stopPropagation()}>
+              <img
+                src={screenshots[current].url}
+                alt={`Screenshot ${current + 1}`}
+                className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
+              />
+            </div>
+
+            {/* Next button */}
+            <button
+              onClick={e => { e.stopPropagation(); next() }}
+              disabled={n <= 1}
+              className="flex-none p-3 bg-white/10 hover:bg-amber-500 disabled:opacity-0 disabled:pointer-events-none rounded-full text-white transition-colors"
+              aria-label="Next screenshot"
+            >
+              <ChevronRight size={22} />
+            </button>
+          </div>
         </div>
       )}
     </div>
