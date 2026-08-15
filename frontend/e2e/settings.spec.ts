@@ -40,8 +40,8 @@ test.describe('Settings page', () => {
 
   test('shows export and import sections', async ({ page }) => {
     await page.goto('/settings')
-    await expect(page.getByText('Export')).toBeVisible()
-    await expect(page.getByText('Import')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Import' })).toBeVisible()
   })
 
   test('export button downloads a valid JSON file', async ({ page, request }) => {
