@@ -91,28 +91,40 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddGame            func(childComplexity int, input model.GameInput) int
-		DeleteGame         func(childComplexity int, id string) int
-		ExportLibrary      func(childComplexity int) int
-		ImportFromF95      func(childComplexity int, threadURL string) int
-		ImportFromVndb     func(childComplexity int, vndbID string) int
-		ImportLibrary      func(childComplexity int, json string) int
-		SetF95Credentials  func(childComplexity int, username string, password string) int
-		SyncAllF95Versions func(childComplexity int) int
-		SyncF95Version     func(childComplexity int, id string) int
-		SyncLatestVersion  func(childComplexity int, id string) int
-		TestF95Connection  func(childComplexity int) int
-		UpdateGame         func(childComplexity int, id string, input model.GameInput) int
+		AddGame                  func(childComplexity int, input model.GameInput) int
+		AddRecommendationLink    func(childComplexity int, url string, title string) int
+		DeleteGame               func(childComplexity int, id string) int
+		DeleteRecommendationLink func(childComplexity int, id string) int
+		ExportLibrary            func(childComplexity int) int
+		ImportFromF95            func(childComplexity int, threadURL string) int
+		ImportFromVndb           func(childComplexity int, vndbID string) int
+		ImportLibrary            func(childComplexity int, json string) int
+		SetF95Credentials        func(childComplexity int, username string, password string) int
+		SyncAllF95Versions       func(childComplexity int) int
+		SyncF95Version           func(childComplexity int, id string) int
+		SyncLatestVersion        func(childComplexity int, id string) int
+		TestF95Connection        func(childComplexity int) int
+		UpdateGame               func(childComplexity int, id string, input model.GameInput) int
+		UpdateRecommendationLink func(childComplexity int, id string, title string, url string) int
 	}
 
 	Query struct {
-		AppSettings func(childComplexity int) int
-		Game        func(childComplexity int, id string) int
-		Games       func(childComplexity int, filter *model.GameFilter) int
-		GetF95Game  func(childComplexity int, threadURL string) int
-		GetVNDBGame func(childComplexity int, vndbID string) int
-		SearchF95   func(childComplexity int, query string, page *int) int
-		SearchVndb  func(childComplexity int, query string, page *int, adultsOnly *bool) int
+		AppSettings         func(childComplexity int) int
+		FetchLinkTitle      func(childComplexity int, url string) int
+		Game                func(childComplexity int, id string) int
+		Games               func(childComplexity int, filter *model.GameFilter) int
+		GetF95Game          func(childComplexity int, threadURL string) int
+		GetVNDBGame         func(childComplexity int, vndbID string) int
+		RecommendationLinks func(childComplexity int) int
+		SearchF95           func(childComplexity int, query string, page *int) int
+		SearchVndb          func(childComplexity int, query string, page *int, adultsOnly *bool) int
+	}
+
+	RecommendationLink struct {
+		AddedAt func(childComplexity int) int
+		ID      func(childComplexity int) int
+		Title   func(childComplexity int) int
+		URL     func(childComplexity int) int
 	}
 
 	SyncResult struct {
@@ -156,6 +168,9 @@ type MutationResolver interface {
 	SetF95Credentials(ctx context.Context, username string, password string) (bool, error)
 	TestF95Connection(ctx context.Context) (bool, error)
 	SyncAllF95Versions(ctx context.Context) (*model.SyncResult, error)
+	AddRecommendationLink(ctx context.Context, url string, title string) (*model.RecommendationLink, error)
+	UpdateRecommendationLink(ctx context.Context, id string, title string, url string) (*model.RecommendationLink, error)
+	DeleteRecommendationLink(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
 	Games(ctx context.Context, filter *model.GameFilter) ([]*model.Game, error)
@@ -165,6 +180,8 @@ type QueryResolver interface {
 	SearchF95(ctx context.Context, query string, page *int) (*model.F95SearchResult, error)
 	GetF95Game(ctx context.Context, threadURL string) (*model.F95Game, error)
 	AppSettings(ctx context.Context) (*model.AppSettings, error)
+	RecommendationLinks(ctx context.Context) ([]*model.RecommendationLink, error)
+	FetchLinkTitle(ctx context.Context, url string) (string, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -425,6 +442,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AddGame(childComplexity, args["input"].(model.GameInput)), true
+	case "Mutation.addRecommendationLink":
+		if e.ComplexityRoot.Mutation.AddRecommendationLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addRecommendationLink_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AddRecommendationLink(childComplexity, args["url"].(string), args["title"].(string)), true
 	case "Mutation.deleteGame":
 		if e.ComplexityRoot.Mutation.DeleteGame == nil {
 			break
@@ -436,6 +464,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteGame(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteRecommendationLink":
+		if e.ComplexityRoot.Mutation.DeleteRecommendationLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteRecommendationLink_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteRecommendationLink(childComplexity, args["id"].(string)), true
 	case "Mutation.exportLibrary":
 		if e.ComplexityRoot.Mutation.ExportLibrary == nil {
 			break
@@ -531,6 +570,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateGame(childComplexity, args["id"].(string), args["input"].(model.GameInput)), true
+	case "Mutation.updateRecommendationLink":
+		if e.ComplexityRoot.Mutation.UpdateRecommendationLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateRecommendationLink_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateRecommendationLink(childComplexity, args["id"].(string), args["title"].(string), args["url"].(string)), true
 
 	case "Query.appSettings":
 		if e.ComplexityRoot.Query.AppSettings == nil {
@@ -538,6 +588,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AppSettings(childComplexity), true
+	case "Query.fetchLinkTitle":
+		if e.ComplexityRoot.Query.FetchLinkTitle == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fetchLinkTitle_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FetchLinkTitle(childComplexity, args["url"].(string)), true
 	case "Query.game":
 		if e.ComplexityRoot.Query.Game == nil {
 			break
@@ -583,6 +644,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.GetVNDBGame(childComplexity, args["vndbId"].(string)), true
 
+	case "Query.recommendationLinks":
+		if e.ComplexityRoot.Query.RecommendationLinks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.RecommendationLinks(childComplexity), true
 	case "Query.searchF95":
 		if e.ComplexityRoot.Query.SearchF95 == nil {
 			break
@@ -605,6 +672,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SearchVndb(childComplexity, args["query"].(string), args["page"].(*int), args["adultsOnly"].(*bool)), true
+
+	case "RecommendationLink.addedAt":
+		if e.ComplexityRoot.RecommendationLink.AddedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RecommendationLink.AddedAt(childComplexity), true
+	case "RecommendationLink.id":
+		if e.ComplexityRoot.RecommendationLink.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RecommendationLink.ID(childComplexity), true
+	case "RecommendationLink.title":
+		if e.ComplexityRoot.RecommendationLink.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RecommendationLink.Title(childComplexity), true
+	case "RecommendationLink.url":
+		if e.ComplexityRoot.RecommendationLink.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RecommendationLink.URL(childComplexity), true
 
 	case "SyncResult.errors":
 		if e.ComplexityRoot.SyncResult.Errors == nil {
@@ -824,7 +916,7 @@ type Game {
 input GameFilter {
   status: GameStatus
   hasUpdate: Boolean
-  tag: String
+  tags: [String!]
   search: String
 }
 
@@ -898,6 +990,13 @@ type AppSettings {
   f95Connected: Boolean!
 }
 
+type RecommendationLink {
+  id:      String!
+  url:     String!
+  title:   String!
+  addedAt: String!
+}
+
 type SyncResult {
   total:   Int!
   updated: Int!
@@ -912,6 +1011,8 @@ type Query {
   searchF95(query: String!, page: Int): F95SearchResult!
   getF95Game(threadUrl: String!): F95Game!
   appSettings: AppSettings!
+  recommendationLinks: [RecommendationLink!]!
+  fetchLinkTitle(url: String!): String!
 }
 
 type Mutation {
@@ -927,6 +1028,9 @@ type Mutation {
   setF95Credentials(username: String!, password: String!): Boolean!
   testF95Connection: Boolean!
   syncAllF95Versions: SyncResult!
+  addRecommendationLink(url: String!, title: String!): RecommendationLink!
+  updateRecommendationLink(id: String!, title: String!, url: String!): RecommendationLink!
+  deleteRecommendationLink(id: String!): Boolean!
 }
 `, BuiltIn: false},
 }
@@ -1040,6 +1144,20 @@ func (ec *executionContext) childFields_Game(ctx context.Context, field graphql.
 		return ec.fieldContext_Game_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Game", field.Name)
+}
+
+func (ec *executionContext) childFields_RecommendationLink(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RecommendationLink_id(ctx, field)
+	case "url":
+		return ec.fieldContext_RecommendationLink_url(ctx, field)
+	case "title":
+		return ec.fieldContext_RecommendationLink_title(ctx, field)
+	case "addedAt":
+		return ec.fieldContext_RecommendationLink_addedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RecommendationLink", field.Name)
 }
 
 func (ec *executionContext) childFields_SyncResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1226,12 +1344,48 @@ func (ec *executionContext) field_Mutation_addGame_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_addRecommendationLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "url",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["url"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "title",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteGame_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
 		func(ctx context.Context, v any) (string, error) {
 			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteRecommendationLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -1354,6 +1508,36 @@ func (ec *executionContext) field_Mutation_updateGame_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateRecommendationLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "title",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "url",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["url"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1365,6 +1549,20 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_fetchLinkTitle_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "url",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["url"] = arg0
 	return args, nil
 }
 
@@ -2897,6 +3095,138 @@ func (ec *executionContext) fieldContext_Mutation_syncAllF95Versions(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_addRecommendationLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_addRecommendationLink(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AddRecommendationLink(ctx, fc.Args["url"].(string), fc.Args["title"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RecommendationLink) graphql.Marshaler {
+			return ec.marshalNRecommendationLink2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLink(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_addRecommendationLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RecommendationLink(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addRecommendationLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateRecommendationLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateRecommendationLink(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateRecommendationLink(ctx, fc.Args["id"].(string), fc.Args["title"].(string), fc.Args["url"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RecommendationLink) graphql.Marshaler {
+			return ec.marshalNRecommendationLink2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLink(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateRecommendationLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RecommendationLink(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateRecommendationLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteRecommendationLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteRecommendationLink(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteRecommendationLink(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteRecommendationLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteRecommendationLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_games(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3193,6 +3523,82 @@ func (ec *executionContext) fieldContext_Query_appSettings(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_recommendationLinks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_recommendationLinks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().RecommendationLinks(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.RecommendationLink) graphql.Marshaler {
+			return ec.marshalNRecommendationLink2ᚕᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLinkᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_recommendationLinks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RecommendationLink(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_fetchLinkTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_fetchLinkTitle(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().FetchLinkTitle(ctx, fc.Args["url"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_fetchLinkTitle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_fetchLinkTitle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3267,6 +3673,98 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _RecommendationLink_id(ctx context.Context, field graphql.CollectedField, obj *model.RecommendationLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RecommendationLink_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RecommendationLink_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RecommendationLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RecommendationLink_url(ctx context.Context, field graphql.CollectedField, obj *model.RecommendationLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RecommendationLink_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RecommendationLink_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RecommendationLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RecommendationLink_title(ctx context.Context, field graphql.CollectedField, obj *model.RecommendationLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RecommendationLink_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RecommendationLink_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RecommendationLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RecommendationLink_addedAt(ctx context.Context, field graphql.CollectedField, obj *model.RecommendationLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RecommendationLink_addedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AddedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RecommendationLink_addedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RecommendationLink", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _SyncResult_total(ctx context.Context, field graphql.CollectedField, obj *model.SyncResult) (ret graphql.Marshaler) {
@@ -4702,7 +5200,7 @@ func (ec *executionContext) unmarshalInputGameFilter(ctx context.Context, obj an
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "hasUpdate", "tag", "search"}
+	fieldsInOrder := [...]string{"status", "hasUpdate", "tags", "search"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4723,13 +5221,13 @@ func (ec *executionContext) unmarshalInputGameFilter(ctx context.Context, obj an
 				return it, err
 			}
 			it.HasUpdate = data
-		case "tag":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tag"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "tags":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Tag = data
+			it.Tags = data
 		case "search":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -5321,6 +5819,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "addRecommendationLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addRecommendationLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateRecommendationLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateRecommendationLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteRecommendationLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteRecommendationLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5511,6 +6030,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "recommendationLinks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_recommendationLinks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "fetchLinkTitle":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_fetchLinkTitle(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -5519,6 +6082,60 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var recommendationLinkImplementors = []string{"RecommendationLink"}
+
+func (ec *executionContext) _RecommendationLink(ctx context.Context, sel ast.SelectionSet, obj *model.RecommendationLink) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, recommendationLinkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RecommendationLink")
+		case "id":
+			out.Values[i] = ec._RecommendationLink_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._RecommendationLink_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._RecommendationLink_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addedAt":
+			out.Values[i] = ec._RecommendationLink_addedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6257,6 +6874,36 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNRecommendationLink2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLink(ctx context.Context, sel ast.SelectionSet, v model.RecommendationLink) graphql.Marshaler {
+	return ec._RecommendationLink(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRecommendationLink2ᚕᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLinkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RecommendationLink) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRecommendationLink2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLink(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRecommendationLink2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐRecommendationLink(ctx context.Context, sel ast.SelectionSet, v *model.RecommendationLink) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RecommendationLink(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {

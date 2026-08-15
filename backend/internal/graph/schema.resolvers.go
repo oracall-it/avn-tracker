@@ -10,6 +10,10 @@ import (
 	"avn-tracker/backend/internal/model"
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 // AddGame is the resolver for the addGame field.
@@ -112,6 +116,15 @@ func (r *mutationResolver) ImportFromF95(ctx context.Context, threadURL string) 
 	}
 
 	f95ID := game.ThreadID
+
+	devStatus := model.DevStatusOngoing
+	switch game.Status {
+	case "Complete":
+		devStatus = model.DevStatusComplete
+	case "Abandoned":
+		devStatus = model.DevStatusAbandoned
+	}
+
 	input := model.GameInput{
 		Title:         game.Title,
 		Developer:     &game.Developer,
@@ -120,6 +133,7 @@ func (r *mutationResolver) ImportFromF95(ctx context.Context, threadURL string) 
 		LatestVersion: &game.Version,
 		Description:   &game.Description,
 		F95Id:         &f95ID,
+		DevStatus:     &devStatus,
 	}
 	return r.Repo.Create(ctx, input)
 }
@@ -198,6 +212,22 @@ func (r *mutationResolver) SyncAllF95Versions(ctx context.Context) (*model.SyncR
 		Updated: result.Updated,
 		Errors:  errors,
 	}, nil
+}
+
+// AddRecommendationLink is the resolver for the addRecommendationLink field.
+func (r *mutationResolver) AddRecommendationLink(ctx context.Context, url string, title string) (*model.RecommendationLink, error) {
+	return r.Links.Create(ctx, url, title)
+}
+
+// UpdateRecommendationLink is the resolver for the updateRecommendationLink field.
+func (r *mutationResolver) UpdateRecommendationLink(ctx context.Context, id string, title string, url string) (*model.RecommendationLink, error) {
+	return r.Links.Update(ctx, id, title, url)
+}
+
+// DeleteRecommendationLink is the resolver for the deleteRecommendationLink field.
+func (r *mutationResolver) DeleteRecommendationLink(ctx context.Context, id string) (bool, error) {
+	err := r.Links.Delete(ctx, id)
+	return err == nil, err
 }
 
 // Games is the resolver for the games field.
@@ -327,6 +357,48 @@ func (r *queryResolver) AppSettings(ctx context.Context) (*model.AppSettings, er
 		F95Username:  username,
 		F95Connected: r.F95.IsLoggedIn(),
 	}, nil
+}
+
+// RecommendationLinks is the resolver for the recommendationLinks field.
+func (r *queryResolver) RecommendationLinks(ctx context.Context) ([]*model.RecommendationLink, error) {
+	return r.Links.List(ctx)
+}
+
+// FetchLinkTitle is the resolver for the fetchLinkTitle field.
+func (r *queryResolver) FetchLinkTitle(ctx context.Context, url string) (string, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return url, nil
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; AVNTracker/1.0)")
+	resp, err := client.Do(req)
+	if err != nil {
+		return url, nil
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return "", nil
+	}
+
+	if og, exists := doc.Find(`meta[property="og:title"]`).Attr("content"); exists {
+		if t := pickLinkTitle(og); t != "" {
+			return t, nil
+		}
+	}
+	if tw, exists := doc.Find(`meta[name="twitter:title"]`).Attr("content"); exists {
+		if t := pickLinkTitle(tw); t != "" {
+			return t, nil
+		}
+	}
+	if t := pickLinkTitle(doc.Find("title").First().Text()); t != "" {
+		return t, nil
+	}
+
+	// Return empty — frontend will leave title field blank for the user to fill in.
+	return "", nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

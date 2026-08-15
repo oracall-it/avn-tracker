@@ -37,7 +37,7 @@ type Game {
 input GameFilter {
   status: GameStatus
   hasUpdate: Boolean
-  tag: String
+  tags: [String!]
   search: String
 }
 
@@ -111,6 +111,13 @@ type AppSettings {
   f95Connected: Boolean!
 }
 
+type RecommendationLink {
+  id:      String!
+  url:     String!
+  title:   String!
+  addedAt: String!
+}
+
 type SyncResult {
   total:   Int!
   updated: Int!
@@ -125,6 +132,8 @@ type Query {
   searchF95(query: String!, page: Int): F95SearchResult!
   getF95Game(threadUrl: String!): F95Game!
   appSettings: AppSettings!
+  recommendationLinks: [RecommendationLink!]!
+  fetchLinkTitle(url: String!): String!
 }
 
 type Mutation {
@@ -140,4 +149,7 @@ type Mutation {
   setF95Credentials(username: String!, password: String!): Boolean!
   testF95Connection: Boolean!
   syncAllF95Versions: SyncResult!
+  addRecommendationLink(url: String!, title: String!): RecommendationLink!
+  updateRecommendationLink(id: String!, title: String!, url: String!): RecommendationLink!
+  deleteRecommendationLink(id: String!): Boolean!
 }

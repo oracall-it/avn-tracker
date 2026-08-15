@@ -10,6 +10,7 @@ import (
 type Resolver struct {
 	Repo     *repository.GameRepo
 	Settings *repository.SettingsRepo
+	Links    *repository.LinkRepo
 	VNDB     *vndb.Client
 	F95      *f95.Client
 	Syncer   *syncer.Syncer

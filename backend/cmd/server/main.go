@@ -34,6 +34,7 @@ func main() {
 	for _, migrationPath := range []string{
 		"/app/migrations/001_init.up.sql",
 		"/app/migrations/002_f95.up.sql",
+		"/app/migrations/003_recommendation_links.up.sql",
 	} {
 		migration, err := os.ReadFile(migrationPath)
 		if err != nil {
@@ -46,6 +47,7 @@ func main() {
 
 	settingsRepo := repository.NewSettingsRepo(pool)
 	gameRepo := repository.NewGameRepo(pool)
+	linkRepo := repository.NewLinkRepo(pool)
 	f95Client := f95.NewClient()
 
 	// Restore F95 session from stored credentials if available.
@@ -81,6 +83,7 @@ func main() {
 	resolver := &graph.Resolver{
 		Repo:     gameRepo,
 		Settings: settingsRepo,
+		Links:    linkRepo,
 		VNDB:     vndb.NewClient(),
 		F95:      f95Client,
 		Syncer:   appSyncer,

@@ -35,9 +35,9 @@ func (r *GameRepo) List(ctx context.Context, filter *model.GameFilter) ([]*model
 			args = append(args, string(*filter.Status))
 			i++
 		}
-		if filter.Tag != nil {
+		for _, tag := range filter.Tags {
 			q += fmt.Sprintf(" AND $%d = ANY(tags)", i)
-			args = append(args, *filter.Tag)
+			args = append(args, tag)
 			i++
 		}
 		if filter.Search != nil {

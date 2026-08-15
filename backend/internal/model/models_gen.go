@@ -66,7 +66,7 @@ type Game struct {
 type GameFilter struct {
 	Status    *GameStatus `json:"status,omitempty"`
 	HasUpdate *bool       `json:"hasUpdate,omitempty"`
-	Tag       *string     `json:"tag,omitempty"`
+	Tags      []string    `json:"tags,omitempty"`
 	Search    *string     `json:"search,omitempty"`
 }
 
@@ -90,6 +90,13 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type RecommendationLink struct {
+	ID      string `json:"id"`
+	URL     string `json:"url"`
+	Title   string `json:"title"`
+	AddedAt string `json:"addedAt"`
 }
 
 type SyncResult struct {

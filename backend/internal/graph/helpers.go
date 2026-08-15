@@ -3,7 +3,29 @@ package graph
 import (
 	"avn-tracker/backend/internal/model"
 	"avn-tracker/backend/internal/vndb"
+	"strings"
 )
+
+// genericPageTitles contains known SPA placeholder titles that don't represent
+// the real page content (e.g. Notion renders "Notion" in <title> until JS runs).
+var genericPageTitles = map[string]bool{
+	"notion":        true,
+	"google docs":   true,
+	"google drive":  true,
+	"google sheets": true,
+	"google slides": true,
+	"untitled":      true,
+}
+
+// pickLinkTitle returns s trimmed if it is non-empty and not a known generic
+// SPA placeholder; otherwise returns "".
+func pickLinkTitle(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || genericPageTitles[strings.ToLower(s)] {
+		return ""
+	}
+	return s
+}
 
 func vnToResult(vn *vndb.VN) *model.VNDBResult {
 	coverURL := ""
