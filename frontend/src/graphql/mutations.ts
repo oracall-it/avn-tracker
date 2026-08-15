@@ -82,3 +82,21 @@ export const SYNC_ALL_F95_VERSIONS = gql`
     }
   }
 `
+
+export const ADD_RECOMMENDATION_LINK = gql`
+  mutation AddRecommendationLink($url: String!, $title: String!) {
+    addRecommendationLink(url: $url, title: $title) { id url title addedAt }
+  }
+`
+
+export const UPDATE_RECOMMENDATION_LINK = gql`
+  mutation UpdateRecommendationLink($id: String!, $title: String!, $url: String!) {
+    updateRecommendationLink(id: $id, title: $title, url: $url) { id url title addedAt }
+  }
+`
+
+export const DELETE_RECOMMENDATION_LINK = gql`
+  mutation DeleteRecommendationLink($id: String!) {
+    deleteRecommendationLink(id: $id)
+  }
+`

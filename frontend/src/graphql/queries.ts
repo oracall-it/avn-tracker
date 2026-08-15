@@ -63,3 +63,15 @@ export const GET_APP_SETTINGS = gql`
     appSettings { f95Username f95Connected }
   }
 `
+
+export const GET_RECOMMENDATION_LINKS = gql`
+  query GetRecommendationLinks {
+    recommendationLinks { id url title addedAt }
+  }
+`
+
+export const FETCH_LINK_TITLE = gql`
+  query FetchLinkTitle($url: String!) {
+    fetchLinkTitle(url: $url)
+  }
+`

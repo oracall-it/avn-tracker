@@ -45,7 +45,7 @@ export interface VNDBPage {
 export interface GameFilter {
   status?: GameStatus | null
   hasUpdate?: boolean | null
-  tag?: string | null
+  tags?: string[]
   search?: string | null
 }
 
@@ -102,6 +102,13 @@ export interface SyncResult {
   total: number
   updated: number
   errors: string[]
+}
+
+export interface RecommendationLink {
+  id: string
+  url: string
+  title: string
+  addedAt: string
 }
 
 export const STATUS_LABELS: Record<GameStatus, string> = {

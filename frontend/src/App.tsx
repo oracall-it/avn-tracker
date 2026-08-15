@@ -1,6 +1,11 @@
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+
+type DrawerSide = 'left' | 'right'
+interface DrawerSideCtx { side: DrawerSide; setSide: (s: DrawerSide) => void }
+const DrawerSideContext = createContext<DrawerSideCtx>({ side: 'right', setSide: () => {} })
+export function useDrawerSide() { return useContext(DrawerSideContext) }
 import { BookOpen, Compass, Settings2, Sun, Moon } from 'lucide-react'
 import { Library } from './pages/Library'
 import { Discover } from './pages/Discover'
@@ -8,6 +13,7 @@ import { GameDetail } from './pages/GameDetail'
 import { VNDBGameDetail } from './pages/VNDBGameDetail'
 import { F95GameDetail } from './pages/F95GameDetail'
 import { Settings } from './pages/Settings'
+import { LinksDrawer } from './components/LinksDrawer'
 
 const client = new ApolloClient({
   uri: '/graphql',
@@ -76,11 +82,18 @@ function Nav() {
 }
 
 export default function App() {
+  const [drawerSide, setDrawerSide] = useState<DrawerSide>(() =>
+    (localStorage.getItem('drawer-side') as DrawerSide) ?? 'right'
+  )
+  const setSide = (s: DrawerSide) => { setDrawerSide(s); localStorage.setItem('drawer-side', s) }
+
   return (
     <ApolloProvider client={client}>
       <BrowserRouter>
+        <DrawerSideContext.Provider value={{ side: drawerSide, setSide }}>
         <div className="min-h-screen bg-stone-50 dark:bg-stone-950 transition-colors">
           <Nav />
+          <LinksDrawer />
           <Routes>
             <Route path="/" element={<Library />} />
             <Route path="/discover" element={<Discover />} />
@@ -90,6 +103,7 @@ export default function App() {
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
+        </DrawerSideContext.Provider>
       </BrowserRouter>
     </ApolloProvider>
   )
