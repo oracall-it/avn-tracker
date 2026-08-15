@@ -25,11 +25,13 @@ Track games, monitor version updates, and discover new titles — all without le
 
 ### 📚 Library Management
 
-- Add games manually or import directly from [VNDB](https://vndb.org)
+- Add games manually or import directly from [VNDB](https://vndb.org) or [F95Zone](https://f95zone.to)
 - Track play status: **Playing · Want · Completed · On Hold · Dropped**
 - Track developer status: **Ongoing · Complete · Abandoned**
 - Store cover art, download links, tags, notes, and descriptions
 - Grid view and list view with persistent preference
+- Filter by **multiple tags simultaneously** with a custom multi-select dropdown
+- Setting status to **Completed** auto-fills the version played from latest version; one-click copy button also available
 
 </td>
 <td width="50%">
@@ -42,6 +44,8 @@ Track games, monitor version updates, and discover new titles — all without le
 - Smart version extraction from VNDB release titles
 - Automatic weekly background sync for all F95Zone games
 - Manual **Sync all** in Settings to check every F95Zone game at once
+- Correctly imports **Final** version label from F95Zone threads
+- Correctly imports developer status (Complete / Abandoned) from F95Zone
 
 </td>
 </tr>
@@ -59,14 +63,35 @@ Track games, monitor version updates, and discover new titles — all without le
 </td>
 <td>
 
-### ⚙️ Settings & Everything Else
+### 🔗 Saved Links Drawer
+
+- Floating side drawer for saving and organising recommendation lists, wikis, or any URL
+- Auto-fetches page title on URL paste (og:title / twitter:title / `<title>` fallback)
+- Edit both title and URL of any saved link
+- Search across saved links; **Open all** to launch all visible links at once
+- Configurable: choose left or right side of the screen from Settings
+
+</td>
+</tr>
+<tr>
+<td>
+
+### ⚙️ Settings
 
 - F95Zone credentials management (username + password, stored locally)
 - **Sync all** button to check every F95Zone game for updates in one go
 - Export full library to JSON for backup or migration
 - Import JSON to restore library on any AVN Tracker instance
+- **Drawer position** — pin the links drawer to the left or right edge
 - Light and dark theme with toggle (warm stone palette)
+
+</td>
+<td>
+
+### 🎨 UI & Everything Else
+
 - Screenshot gallery with lightbox — navigate between images with arrow buttons or ← → Esc
+- Custom scrollbar matching the design system in both light and dark mode
 - VNDB rate limiting + response cache to respect API usage policy
 
 </td>
@@ -176,14 +201,22 @@ avn-tracker/
 │       ├── database/
 │       │   ├── db.go                    # pgx connection pool
 │       │   └── migrations/
-│       │       └── 001_init.up.sql      # schema — runs automatically on startup
+│       │       ├── 001_init.up.sql      # games schema
+│       │       ├── 002_settings.up.sql  # settings k/v store
+│       │       └── 003_recommendation_links.up.sql
+│       ├── f95/
+│       │   └── scraper.go              # ⭐ F95Zone HTTP scraper (login, search, parse)
 │       ├── graph/
 │       │   ├── schema.graphqls          # ⭐ GraphQL schema (source of truth)
 │       │   ├── resolver.go              # root resolver (dependency injection)
+│       │   ├── helpers.go               # shared resolver helpers (pickLinkTitle, etc.)
+│       │   ├── helpers_test.go          # unit tests for helpers
 │       │   ├── schema.resolvers.go      # query + mutation implementations
 │       │   └── generated/               # gqlgen output — do not edit
 │       ├── model/models_gen.go          # gqlgen-generated Go structs
-│       ├── repository/game_repo.go      # all SQL CRUD operations
+│       ├── repository/
+│       │   ├── game_repo.go             # game CRUD + JSON export/import
+│       │   └── link_repo.go             # recommendation links CRUD
 │       └── vndb/client.go              # ⭐ VNDB API client (rate limiter + cache)
 │
 └── frontend/                            # React SPA
@@ -192,14 +225,15 @@ avn-tracker/
     ├── index.html
     ├── vite.config.ts                   # Tailwind v4 via @tailwindcss/vite
     └── src/
-        ├── App.tsx                      # Apollo + Router + Nav + theme toggle
+        ├── App.tsx                      # Apollo + Router + Nav + theme + DrawerSideContext
         ├── components/
         │   ├── ConfirmModal.tsx         # generic confirmation modal
-        │   ├── FilterBar.tsx            # status pills + search + tag filter
+        │   ├── FilterBar.tsx            # status pills + search + multi-tag custom select
         │   ├── GameCard.tsx             # grid card component
         │   ├── GameDetailView.tsx       # ⭐ shared detail layout (library + discover)
         │   ├── GameModal.tsx            # add/edit form (react-hook-form)
         │   ├── GameRow.tsx              # list row component
+        │   ├── LinksDrawer.tsx          # ⭐ saved links side drawer
         │   ├── ScreenshotCarousel.tsx   # screenshot gallery with lightbox
         │   ├── UpdateBadge.tsx          # update available indicator
         │   └── VNDBSearchInline.tsx     # VNDB search inside add-game modal
@@ -213,7 +247,7 @@ avn-tracker/
         │   ├── F95GameDetail.tsx        # F95Zone game detail + import to library
         │   ├── GameDetail.tsx           # library game detail
         │   ├── Library.tsx              # main library (grid/list)
-        │   ├── Settings.tsx             # F95Zone credentials + export/import JSON
+        │   ├── Settings.tsx             # credentials, sync, export/import, drawer position
         │   └── VNDBGameDetail.tsx       # VNDB game detail (discover → library)
         └── types/game.ts                # TypeScript interfaces + status colour maps
 ```
@@ -433,6 +467,9 @@ docker compose up --build -d
 
 - [x] Automatic background polling — sync all games on a schedule
 - [x] F95Zone pagination on search results
+- [x] Saved links / recommendation drawer
+- [x] Multi-tag filtering in library
+- [x] F95Zone: correct DevStatus and Final version on import
 - [ ] Multiple download links per game (mirrors, Patreon, itch.io)
 - [ ] Personal rating / score field
 - [ ] Mobile layout improvements
