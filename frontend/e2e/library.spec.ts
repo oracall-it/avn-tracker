@@ -123,6 +123,21 @@ test.describe('Library page', () => {
     await expect(page.getByText('[E2E] Other Game')).not.toBeVisible()
   })
 
+  // ── Modal scroll lock ─────────────────────────────────────────────────────
+
+  test('body scroll locked while add-game modal is open', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Add Game' }).click()
+    await expect(page.getByRole('heading', { name: 'Add Game' })).toBeVisible()
+
+    const overflow = await page.evaluate(() => document.body.style.overflow)
+    expect(overflow).toBe('hidden')
+
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    const overflowAfter = await page.evaluate(() => document.body.style.overflow)
+    expect(overflowAfter).not.toBe('hidden')
+  })
+
   // ── CRUD via UI ───────────────────────────────────────────────────────────
 
   test('add game manually via modal', async ({ page }) => {

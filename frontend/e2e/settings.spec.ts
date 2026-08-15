@@ -90,6 +90,41 @@ test.describe('Settings page', () => {
     await expect(page.getByText(game.title)).toBeVisible()
   })
 
+  // ── F95Zone credentials ───────────────────────────────────────────────────
+
+  test('F95Zone account section is visible', async ({ page }) => {
+    await page.goto('/settings')
+    await expect(page.getByText('F95Zone Account')).toBeVisible()
+    await expect(page.getByPlaceholder('F95Zone username')).toBeVisible()
+    await expect(page.getByPlaceholder('Password')).toBeVisible()
+  })
+
+  test('Save & Connect button is disabled when fields are empty', async ({ page }) => {
+    await page.goto('/settings')
+    const btn = page.getByRole('button', { name: 'Save & Connect' })
+    await expect(btn).toBeDisabled()
+  })
+
+  test('Save & Connect button enables when both fields are filled', async ({ page }) => {
+    await page.goto('/settings')
+    await page.getByPlaceholder('F95Zone username').fill('testuser')
+    await page.getByPlaceholder('Password').fill('testpass')
+    await expect(page.getByRole('button', { name: 'Save & Connect' })).toBeEnabled()
+  })
+
+  test('Save & Connect button stays disabled with only username filled', async ({ page }) => {
+    await page.goto('/settings')
+    await page.getByPlaceholder('F95Zone username').fill('testuser')
+    await expect(page.getByRole('button', { name: 'Save & Connect' })).toBeDisabled()
+  })
+
+  test('connection status badge is shown', async ({ page }) => {
+    await page.goto('/settings')
+    // Badge reads either "Connected" or "Not connected".
+    const badge = page.locator('span').filter({ hasText: /^(Connected|Not connected)$/ })
+    await expect(badge).toBeVisible()
+  })
+
   // ── Theme ─────────────────────────────────────────────────────────────────
 
   test('theme toggle switches between light and dark mode', async ({ page }) => {

@@ -135,6 +135,40 @@ test.describe('Game Detail page', () => {
     await expect(page.getByText('Notes to clear')).not.toBeVisible()
   })
 
+  // ── Modal scroll lock ─────────────────────────────────────────────────────
+
+  test('body scroll locked while edit modal is open', async ({ page, request }) => {
+    const game = await createTestGame(request)
+    await page.goto('/')
+    await openDetail(page, game.title)
+
+    await page.getByRole('button', { name: 'Edit' }).click()
+    await expect(page.getByRole('heading', { name: 'Edit Game' })).toBeVisible()
+
+    const overflow = await page.evaluate(() => document.body.style.overflow)
+    expect(overflow).toBe('hidden')
+
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    const overflowAfter = await page.evaluate(() => document.body.style.overflow)
+    expect(overflowAfter).not.toBe('hidden')
+  })
+
+  test('body scroll locked while remove confirm modal is open', async ({ page, request }) => {
+    const game = await createTestGame(request)
+    await page.goto('/')
+    await openDetail(page, game.title)
+
+    await page.getByRole('button', { name: 'Remove' }).click()
+    await expect(page.getByText(`Remove "${game.title}" from library?`)).toBeVisible()
+
+    const overflow = await page.evaluate(() => document.body.style.overflow)
+    expect(overflow).toBe('hidden')
+
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    const overflowAfter = await page.evaluate(() => document.body.style.overflow)
+    expect(overflowAfter).not.toBe('hidden')
+  })
+
   // ── Delete ────────────────────────────────────────────────────────────────
 
   test('delete from detail page redirects to library', async ({ page, request }) => {
@@ -142,8 +176,13 @@ test.describe('Game Detail page', () => {
     await page.goto('/')
     await openDetail(page, game.title)
 
+    // "Remove" opens ConfirmModal; the modal's confirm calls GameDetail.handleDelete
+    // which in turn fires a native browser confirm — accept both.
+    await page.getByRole('button', { name: 'Remove' }).click()
+    await expect(page.getByText(`Remove "${game.title}" from library?`)).toBeVisible()
+
     page.once('dialog', d => d.accept())
-    await page.getByRole('button', { name: 'Delete' }).click()
+    await page.getByRole('button', { name: 'Remove', exact: true }).last().click()
 
     await expect(page).toHaveURL('/')
     await expect(page.getByText(game.title)).not.toBeVisible()

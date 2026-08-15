@@ -89,7 +89,7 @@ test.describe('Discover page', () => {
     await page.locator(CARD).first().click()
 
     await expect(page).toHaveURL(/\/discover\/game\/v/, { timeout: 5_000 })
-    await expect(page.getByText('Back to Discover')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Back' })).toBeVisible()
   })
 
   test('VNDB detail page shows title and Add to Library button', async ({ page }) => {
@@ -101,19 +101,54 @@ test.describe('Discover page', () => {
     await expect(page.getByRole('button', { name: 'Add to Library' })).toBeVisible()
   })
 
-  test('add to library from hover overlay works', async ({ page }) => {
+  // ── Tab switching ─────────────────────────────────────────────────────────
+
+  test('VNDB and F95Zone tabs are visible', async ({ page }) => {
+    await page.goto('/discover')
+    await expect(page.getByRole('button', { name: 'VNDB' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'F95Zone' })).toBeVisible()
+  })
+
+  test('VNDB tab is active by default', async ({ page }) => {
+    await page.goto('/discover')
+    await expect(page.getByPlaceholder(/Search visual novels/)).toBeVisible()
+  })
+
+  test('switching to F95Zone tab shows F95 search input', async ({ page }) => {
+    await page.goto('/discover')
+    await page.getByRole('button', { name: 'F95Zone' }).click()
+    await expect(page.getByPlaceholder(/Search games on F95Zone/)).toBeVisible()
+  })
+
+  test('F95Zone tab shows empty state before search', async ({ page }) => {
+    await page.goto('/discover')
+    await page.getByRole('button', { name: 'F95Zone' }).click()
+    await expect(page.getByText('Type to search F95Zone games')).toBeVisible()
+  })
+
+  test('switching back to VNDB tab shows VNDB search', async ({ page }) => {
+    await page.goto('/discover')
+    await page.getByRole('button', { name: 'F95Zone' }).click()
+    await page.getByRole('button', { name: 'VNDB' }).click()
+    await expect(page.getByPlaceholder(/Search visual novels/)).toBeVisible()
+  })
+
+  test('tab selection is preserved in URL params', async ({ page }) => {
+    await page.goto('/discover')
+    await page.getByRole('button', { name: 'F95Zone' }).click()
+    await expect(page).toHaveURL(/tab=f95/)
+  })
+
+  // ── VNDB cards — no hover add button ─────────────────────────────────────
+
+  test('VNDB cards have no hover add-to-library button', async ({ page }) => {
     await page.goto('/discover')
     const card = page.locator(CARD).first()
     await card.waitFor({ timeout: API_TIMEOUT })
 
     await card.hover()
-    await page.waitForTimeout(200)
+    await page.waitForTimeout(300)
 
-    const addBtn = card.getByTitle('Add to library')
-    await expect(addBtn).toBeVisible()
-    await addBtn.click()
-
-    // Button changes to check mark (success state).
-    await expect(card.locator('[title]').filter({ hasText: '' }).first()).toBeVisible({ timeout: 10_000 })
+    await expect(card.getByTitle('Add to library')).not.toBeVisible()
   })
 })
