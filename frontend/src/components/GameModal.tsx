@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useScrollLock } from '../hooks/useScrollLock'
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@apollo/client'
-import { X } from 'lucide-react'
+import { X, ArrowLeft } from 'lucide-react'
 import { Game, GameInput, GameStatus, DevStatus } from '../types/game'
 import { ADD_GAME, UPDATE_GAME } from '../graphql/mutations'
 import { GET_GAMES } from '../graphql/queries'
@@ -36,7 +36,7 @@ export function GameModal({ game, onClose }: Props) {
   const [tab, setTab] = useState<'manual' | 'vndb'>('manual')
   const isEdit = !!game
 
-  const { register, handleSubmit, reset } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, setValue, getValues } = useForm<FormValues>({
     defaultValues: {
       title: '', developer: '', coverUrl: '', status: 'WANT', devStatus: 'ONGOING',
       myVersion: '', latestVersion: '', downloadUrl: '', tagsRaw: '', notes: '', description: '', vndbId: '',
@@ -53,6 +53,14 @@ export function GameModal({ game, onClose }: Props) {
       })
     }
   }, [game, reset])
+
+  const watchedStatus = watch('status')
+  useEffect(() => {
+    if (watchedStatus === 'COMPLETED' && !getValues('myVersion')) {
+      setValue('myVersion', getValues('latestVersion') || '')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedStatus])
 
   const [addGame] = useMutation(ADD_GAME, { refetchQueries: [GET_GAMES] })
   const [updateGame] = useMutation(UPDATE_GAME, { refetchQueries: [GET_GAMES] })
@@ -157,10 +165,20 @@ export function GameModal({ game, onClose }: Props) {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-[1fr_auto_1fr] gap-2">
                 <div>
                   <label className={labelCls}>Version I Played</label>
                   <input {...register('myVersion')} className={inputCls} placeholder="e.g. 0.9.2" />
+                </div>
+                <div className="flex items-end pb-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setValue('myVersion', getValues('latestVersion') || '')}
+                    className="p-2 rounded-lg text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    title="Copy latest version to version played"
+                  >
+                    <ArrowLeft size={14} />
+                  </button>
                 </div>
                 <div>
                   <label className={labelCls}>Latest Version</label>
