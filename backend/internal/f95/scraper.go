@@ -18,6 +18,9 @@ var (
 	// Matches version bracket: [v1.0.0], [v1.0 Public], [Version 1.2], etc.
 	versionBracketRe = regexp.MustCompile(`(?i)\[v?(?:ersion\s*)?(\d[\d.]*[a-zA-Z]?[\d.]*[^\]]*)\]`)
 
+	// Matches standalone [Final] when no numeric version is present.
+	finalVersionRe = regexp.MustCompile(`(?i)\[Final\]`)
+
 	// Known engine prefix labels used in F95Zone thread titles.
 	engineLabels = map[string]bool{
 		"ren'py": true, "renpy": true, "unity": true, "rpgm": true,
@@ -78,6 +81,9 @@ func (c *Client) GetGame(ctx context.Context, threadURL string) (*Game, error) {
 			v = "v" + v
 		}
 		version = v
+	}
+	if version == "" && finalVersionRe.MatchString(rawTitle) {
+		version = "Final"
 	}
 	title := cleanBrackets(rawTitle)
 
@@ -212,9 +218,9 @@ func extractOverviewField(postHTML string) string {
 	// Try common overview/story/description/synopsis labels.
 	// Each variant covers colon outside (<b>label</b>:), colon inside (<b>label:</b>), and no colon.
 	patterns := []string{
-		"<b>overview</b>:", "<b>story</b>:", "<b>description</b>:", "<b>synopsis</b>:",
-		"<b>overview:</b>", "<b>story:</b>", "<b>description:</b>", "<b>synopsis:</b>",
-		"<b>overview</b>", "<b>story</b>", "<b>description</b>", "<b>synopsis</b>",
+		"<b>overview</b>:", "<b>story</b>:", "<b>description</b>:", "<b>synopsis</b>:", "<b>plot</b>:",
+		"<b>overview:</b>", "<b>story:</b>", "<b>description:</b>", "<b>synopsis:</b>", "<b>plot:</b>",
+		"<b>overview</b>", "<b>story</b>", "<b>description</b>", "<b>synopsis</b>", "<b>plot</b>",
 	}
 
 	idx, matchLen := -1, 0
