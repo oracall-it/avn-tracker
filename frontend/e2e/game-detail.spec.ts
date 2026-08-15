@@ -104,7 +104,7 @@ test.describe('Game Detail page', () => {
     const game = await createTestGame(request)
     await page.goto('/')
     await openDetail(page, game.title)
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByTestId('edit-game-btn').click()
     await expect(page.getByRole('heading', { name: 'Edit Game' })).toBeVisible()
   })
 
@@ -112,7 +112,7 @@ test.describe('Game Detail page', () => {
     const game = await createTestGame(request, { status: 'WANT' })
     await page.goto('/')
     await openDetail(page, game.title)
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByTestId('edit-game-btn').click()
 
     // Select the status dropdown (first select in the form).
     await page.locator('form select').first().selectOption('PLAYING')
@@ -127,7 +127,7 @@ test.describe('Game Detail page', () => {
     await openDetail(page, game.title)
     await expect(page.getByText('Notes to clear')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByTestId('edit-game-btn').click()
     await page.getByPlaceholder(/Personal notes/).clear()
     await page.getByRole('button', { name: 'Save Changes' }).click()
 
@@ -142,7 +142,7 @@ test.describe('Game Detail page', () => {
     await page.goto('/')
     await openDetail(page, game.title)
 
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByTestId('edit-game-btn').click()
     await expect(page.getByRole('heading', { name: 'Edit Game' })).toBeVisible()
 
     const overflow = await page.evaluate(() => document.body.style.overflow)

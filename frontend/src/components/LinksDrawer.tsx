@@ -112,7 +112,7 @@ export function LinksDrawer() {
                       ? 'left-0 justify-end pr-2 ' + (isOpen ? '-translate-x-full invisible pointer-events-none' : '-translate-x-8 hover:-translate-x-4')
                       : 'right-0 justify-start pl-2 ' + (isOpen ? 'translate-x-full invisible pointer-events-none' : 'translate-x-8 hover:translate-x-4')
                     }`}
-        title="Saved Lists"
+        title="Saved links"
         aria-label="Open saved links"
       >
         {isLeft

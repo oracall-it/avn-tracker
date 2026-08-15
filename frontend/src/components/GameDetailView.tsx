@@ -160,6 +160,7 @@ export function GameDetailView({
                   )}
                   <div className="flex gap-2">
                     <button
+                      data-testid="edit-game-btn"
                       onClick={onEdit}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-sm font-medium transition-colors border border-stone-200 dark:border-stone-700"
                     >
