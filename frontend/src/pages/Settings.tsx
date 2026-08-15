@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
-import { Download, Upload, ArrowLeft, Loader2, Check, X, Wifi, RefreshCw } from 'lucide-react'
+import { Download, Upload, ArrowLeft, Loader2, Check, X, Wifi, RefreshCw, PanelLeft, PanelRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useDrawerSide } from '../App'
 import { EXPORT_LIBRARY, IMPORT_LIBRARY, SET_F95_CREDENTIALS, TEST_F95_CONNECTION, SYNC_ALL_F95_VERSIONS } from '../graphql/mutations'
 import { GET_GAMES, GET_APP_SETTINGS } from '../graphql/queries'
 import { AppSettings, SyncResult } from '../types/game'
@@ -32,6 +33,7 @@ export function Settings() {
     refetchQueries: [GET_GAMES],
   })
 
+  const { side, setSide } = useDrawerSide()
   const settings = settingsData?.appSettings
 
   const handleExport = async () => {
@@ -123,8 +125,8 @@ export function Settings() {
 
       <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 mb-6">Settings</h1>
 
-      <div className="max-w-lg space-y-4">
-        {/* F95Zone credentials */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start max-w-4xl">
+        {/* F95Zone credentials — left column, tall */}
         <div className={card}>
           <div className="flex items-center justify-between mb-1">
             <h2 className="font-bold text-stone-900 dark:text-stone-100">F95Zone Account</h2>
@@ -197,63 +199,91 @@ export function Settings() {
           </div>
         </div>
 
-        {/* F95Zone sync */}
-        <div className={card}>
-          <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">F95Zone Sync</h2>
-          <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
-            Check all F95Zone games in your library for version updates. Also runs automatically on startup and weekly.
-          </p>
+        {/* Right column: Sync on top, Export + Import below */}
+        <div className="flex flex-col gap-4">
+          {/* F95Zone sync */}
+          <div className={card}>
+            <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">F95Zone Sync</h2>
+            <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
+              Check all F95Zone games in your library for version updates. Also runs automatically on startup and weekly.
+            </p>
 
-          {syncResult && (
-            <div className={`flex items-start gap-2 mb-3 p-3 rounded-xl border text-xs ${
-              syncResult.errors.length > 0
-                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
-                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
-            }`}>
-              <div>
-                <p>{syncResult.updated} of {syncResult.total} games updated.</p>
-                {syncResult.errors.length > 0 && (
-                  <ul className="mt-1 list-disc list-inside space-y-0.5">
-                    {syncResult.errors.map((e, i) => <li key={i}>{e}</li>)}
-                  </ul>
-                )}
+            {syncResult && (
+              <div className={`flex items-start gap-2 mb-3 p-3 rounded-xl border text-xs ${
+                syncResult.errors.length > 0
+                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+                  : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+              }`}>
+                <div>
+                  <p>{syncResult.updated} of {syncResult.total} games updated.</p>
+                  {syncResult.errors.length > 0 && (
+                    <ul className="mt-1 list-disc list-inside space-y-0.5">
+                      {syncResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                    </ul>
+                  )}
+                </div>
               </div>
+            )}
+
+            <button
+              onClick={handleSyncAll}
+              disabled={syncing || !settings?.f95Connected}
+              className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors"
+            >
+              {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              {syncing ? 'Syncing…' : 'Sync all'}
+            </button>
+          </div>
+
+          {/* Drawer position */}
+          <div className={card}>
+            <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">Saved Links Drawer</h2>
+            <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
+              Choose which side of the screen the links drawer appears on.
+            </p>
+            <div className="flex gap-2">
+              {(['left', 'right'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSide(s)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors
+                    ${side === s
+                      ? 'bg-amber-500 border-amber-500 text-white'
+                      : 'bg-stone-100 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                    }`}
+                >
+                  {s === 'left' ? <PanelLeft size={14} /> : <PanelRight size={14} />}
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
-          <button
-            onClick={handleSyncAll}
-            disabled={syncing || !settings?.f95Connected}
-            className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors"
-          >
-            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-            {syncing ? 'Syncing…' : 'Sync all'}
-          </button>
-        </div>
+          {/* Export + Import side by side */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className={card}>
+              <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">Export</h2>
+              <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
+                Download your library as JSON for backup or migration.
+              </p>
+              <button onClick={handleExport} className={btn}>
+                <Download size={15} />
+                Export JSON
+              </button>
+            </div>
 
-        {/* Export */}
-        <div className={card}>
-          <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">Export Library</h2>
-          <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
-            Download all games as JSON for backup or migration.
-          </p>
-          <button onClick={handleExport} className={btn}>
-            <Download size={15} />
-            Export JSON
-          </button>
-        </div>
-
-        {/* Import */}
-        <div className={card}>
-          <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">Import Library</h2>
-          <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
-            Restore from a previously exported JSON. Games with the same ID will be overwritten.
-          </p>
-          <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
-          <button onClick={() => fileRef.current?.click()} className={btn}>
-            <Upload size={15} />
-            Import JSON
-          </button>
+            <div className={card}>
+              <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">Import</h2>
+              <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
+                Restore from a previously exported JSON file.
+              </p>
+              <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+              <button onClick={() => fileRef.current?.click()} className={btn}>
+                <Upload size={15} />
+                Import JSON
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
