@@ -32,6 +32,7 @@ Track games, monitor version updates, and discover new titles — all without le
 - Grid view and list view with persistent preference
 - Filter by **multiple tags simultaneously** with a custom multi-select dropdown
 - Setting status to **Completed** auto-fills the version played from latest version; one-click copy button also available
+- Paginated library with configurable items per page (12 / 24 / 48 / 96 / All), persisted across sessions
 
 </td>
 <td width="50%">
@@ -246,7 +247,7 @@ avn-tracker/
         │   ├── Discover.tsx             # VNDB + F95Zone browse, search, pagination
         │   ├── F95GameDetail.tsx        # F95Zone game detail + import to library
         │   ├── GameDetail.tsx           # library game detail
-        │   ├── Library.tsx              # main library (grid/list)
+        │   ├── Library.tsx              # main library (grid/list, pagination, per-page)
         │   ├── Settings.tsx             # credentials, sync, export/import, drawer position
         │   └── VNDBGameDetail.tsx       # VNDB game detail (discover → library)
         └── types/game.ts                # TypeScript interfaces + status colour maps
