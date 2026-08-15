@@ -34,7 +34,7 @@ body::-webkit-scrollbar,
 *::-webkit-scrollbar { width: var(--sb-size); height: var(--sb-size); }
 
 body::-webkit-scrollbar-track,
-*::-webkit-scrollbar-track { background: var(--sb-track); border-radius: 20px; }
+*::-webkit-scrollbar-track { background: var(--sb-track); }
 
 body::-webkit-scrollbar-thumb,
 *::-webkit-scrollbar-thumb { background: var(--sb-thumb); border-radius: 20px; }
