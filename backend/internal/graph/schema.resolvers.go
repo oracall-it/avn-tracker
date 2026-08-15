@@ -8,7 +8,6 @@ package graph
 import (
 	"avn-tracker/backend/internal/graph/generated"
 	"avn-tracker/backend/internal/model"
-	"avn-tracker/backend/internal/vndb"
 	"context"
 	"fmt"
 )
@@ -187,6 +186,20 @@ func (r *mutationResolver) TestF95Connection(ctx context.Context) (bool, error) 
 	return err == nil, err
 }
 
+// SyncAllF95Versions is the resolver for the syncAllF95Versions field.
+func (r *mutationResolver) SyncAllF95Versions(ctx context.Context) (*model.SyncResult, error) {
+	result := r.Syncer.SyncAll(ctx)
+	errors := result.Errors
+	if errors == nil {
+		errors = []string{}
+	}
+	return &model.SyncResult{
+		Total:   result.Total,
+		Updated: result.Updated,
+		Errors:  errors,
+	}, nil
+}
+
 // Games is the resolver for the games field.
 func (r *queryResolver) Games(ctx context.Context, filter *model.GameFilter) ([]*model.Game, error) {
 	return r.Repo.List(ctx, filter)
@@ -245,13 +258,13 @@ func (r *queryResolver) SearchF95(ctx context.Context, query string, page *int) 
 		p = *page
 	}
 
-	items, err := r.F95.Search(ctx, query, p)
+	page_data, err := r.F95.Search(ctx, query, p)
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*model.F95SearchItem, 0, len(items))
-	for _, item := range items {
+	results := make([]*model.F95SearchItem, 0, len(page_data.Items))
+	for _, item := range page_data.Items {
 		tags := item.Tags
 		if tags == nil {
 			tags = []string{}
@@ -266,7 +279,7 @@ func (r *queryResolver) SearchF95(ctx context.Context, query string, page *int) 
 		})
 	}
 
-	return &model.F95SearchResult{Results: results}, nil
+	return &model.F95SearchResult{Results: results, TotalPages: page_data.TotalPages}, nil
 }
 
 // GetF95Game is the resolver for the getF95Game field.
@@ -314,39 +327,6 @@ func (r *queryResolver) AppSettings(ctx context.Context) (*model.AppSettings, er
 		F95Username:  username,
 		F95Connected: r.F95.IsLoggedIn(),
 	}, nil
-}
-
-// vnToResult converts a VNDB API VN to the GraphQL model.
-func vnToResult(vn *vndb.VN) *model.VNDBResult {
-	coverURL := ""
-	if vn.Image != nil {
-		coverURL = vn.Image.URL
-	}
-	developer := ""
-	if len(vn.Developers) > 0 {
-		developer = vn.Developers[0].Name
-	}
-	tags := make([]string, 0, len(vn.Tags))
-	for _, t := range vn.Tags {
-		tags = append(tags, t.Name)
-	}
-	shots := make([]*model.VNDBScreenshot, 0, len(vn.Screenshots))
-	for _, s := range vn.Screenshots {
-		thumb := s.Thumbnail
-		if thumb == "" {
-			thumb = s.URL
-		}
-		shots = append(shots, &model.VNDBScreenshot{Thumbnail: thumb, URL: s.URL})
-	}
-	return &model.VNDBResult{
-		VndbID:      vn.ID,
-		Title:       vn.Title,
-		Developer:   developer,
-		CoverURL:    coverURL,
-		Tags:        tags,
-		Description: vn.Description,
-		Screenshots: shots,
-	}
 }
 
 // Mutation returns generated.MutationResolver implementation.

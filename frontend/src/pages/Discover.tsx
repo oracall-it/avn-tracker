@@ -307,29 +307,36 @@ function F95Tab() {
 
   const [inputValue, setInputValue] = useState(() => searchParams.get('q') ?? '')
   const [debouncedQ, setDebouncedQ] = useState(() => searchParams.get('q') ?? '')
+  const [page, setPage] = useState(() => parseInt(searchParams.get('page') ?? '1', 10))
 
-  const [search, { data, loading, error }] = useLazyQuery<{ searchF95: F95SearchResult }>(SEARCH_F95)
+  const [search, { data, previousData, loading, error }] = useLazyQuery<{ searchF95: F95SearchResult }>(SEARCH_F95)
 
-  // Debounce typed input → debouncedQ.
+  // Debounce typed input → debouncedQ, reset page.
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQ(inputValue), 700)
+    const t = setTimeout(() => {
+      setDebouncedQ(inputValue)
+      setPage(1)
+    }, 700)
     return () => clearTimeout(t)
   }, [inputValue])
 
   // Search + sync URL. Fires on mount, so a non-empty restored query auto-searches.
   useEffect(() => {
     if (debouncedQ.trim()) {
-      search({ variables: { query: debouncedQ.trim(), page: 1 } })
+      search({ variables: { query: debouncedQ.trim(), page } })
     }
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
       if (debouncedQ) next.set('q', debouncedQ); else next.delete('q')
+      if (page > 1) next.set('page', String(page)); else next.delete('page')
       return next
     }, { replace: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQ])
+  }, [debouncedQ, page])
 
-  const items = data?.searchF95.results ?? []
+  const page_data = data?.searchF95 ?? previousData?.searchF95
+  const items = page_data?.results ?? []
+  const totalPages = page_data?.totalPages ?? 0
 
   return (
     <>
@@ -360,7 +367,7 @@ function F95Tab() {
         </div>
       )}
 
-      {loading && (
+      {loading && items.length === 0 && (
         <div className="flex justify-center py-24">
           <Loader2 size={28} className="animate-spin text-stone-400" />
         </div>
@@ -373,11 +380,45 @@ function F95Tab() {
       )}
 
       {items.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {items.map(item => (
-            <F95Card key={item.threadId || item.threadUrl} item={item} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {items.map(item => (
+              <F95Card key={item.threadId || item.threadUrl} item={item} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-10">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1 || loading}
+                className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                let p: number
+                if (totalPages <= 7) p = i + 1
+                else if (page <= 4) p = i + 1
+                else if (page >= totalPages - 3) p = totalPages - 6 + i
+                else p = page - 3 + i
+                return (
+                  <button key={p} onClick={() => setPage(p)} disabled={loading}
+                    className={`w-10 h-10 rounded-xl text-sm font-semibold transition-colors ${p === page ? 'bg-amber-600 text-white shadow-sm' : 'border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800'}`}
+                  >{p}</button>
+                )
+              })}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || loading}
+                aria-label="Next page"
+                className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </>
   )

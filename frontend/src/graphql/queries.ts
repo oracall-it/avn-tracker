@@ -45,6 +45,7 @@ export const SEARCH_F95 = gql`
   query SearchF95($query: String!, $page: Int) {
     searchF95(query: $query, page: $page) {
       results { threadId threadUrl title version engine tags }
+      totalPages
     }
   }
 `

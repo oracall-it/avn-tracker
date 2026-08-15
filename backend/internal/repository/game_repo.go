@@ -189,6 +189,27 @@ func (r *GameRepo) Delete(ctx context.Context, id string) error {
 	return err
 }
 
+func (r *GameRepo) ListWithF95ID(ctx context.Context) ([]*model.Game, error) {
+	q := `SELECT id, title, developer, cover_url, status, dev_status,
+	             my_version, latest_version, download_url, tags, notes, description,
+	             vndb_id, f95_id, added_at, updated_at
+	      FROM games WHERE f95_id IS NOT NULL AND f95_id != '' ORDER BY added_at DESC`
+	rows, err := r.pool.Query(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var games []*model.Game
+	for rows.Next() {
+		g, err := scanGame(rows)
+		if err != nil {
+			return nil, err
+		}
+		games = append(games, g)
+	}
+	return games, rows.Err()
+}
+
 func (r *GameRepo) UpdateLatestVersion(ctx context.Context, id, latestVersion string) (*model.Game, error) {
 	q := `UPDATE games SET latest_version=$1, updated_at=$2 WHERE id=$3
 	      RETURNING id, title, developer, cover_url, status, dev_status,

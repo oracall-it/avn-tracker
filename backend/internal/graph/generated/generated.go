@@ -66,7 +66,8 @@ type ComplexityRoot struct {
 	}
 
 	F95SearchResult struct {
-		Results func(childComplexity int) int
+		Results    func(childComplexity int) int
+		TotalPages func(childComplexity int) int
 	}
 
 	Game struct {
@@ -90,17 +91,18 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddGame           func(childComplexity int, input model.GameInput) int
-		DeleteGame        func(childComplexity int, id string) int
-		ExportLibrary     func(childComplexity int) int
-		ImportFromF95     func(childComplexity int, threadURL string) int
-		ImportFromVndb    func(childComplexity int, vndbID string) int
-		ImportLibrary     func(childComplexity int, json string) int
-		SetF95Credentials func(childComplexity int, username string, password string) int
-		SyncF95Version    func(childComplexity int, id string) int
-		SyncLatestVersion func(childComplexity int, id string) int
-		TestF95Connection func(childComplexity int) int
-		UpdateGame        func(childComplexity int, id string, input model.GameInput) int
+		AddGame            func(childComplexity int, input model.GameInput) int
+		DeleteGame         func(childComplexity int, id string) int
+		ExportLibrary      func(childComplexity int) int
+		ImportFromF95      func(childComplexity int, threadURL string) int
+		ImportFromVndb     func(childComplexity int, vndbID string) int
+		ImportLibrary      func(childComplexity int, json string) int
+		SetF95Credentials  func(childComplexity int, username string, password string) int
+		SyncAllF95Versions func(childComplexity int) int
+		SyncF95Version     func(childComplexity int, id string) int
+		SyncLatestVersion  func(childComplexity int, id string) int
+		TestF95Connection  func(childComplexity int) int
+		UpdateGame         func(childComplexity int, id string, input model.GameInput) int
 	}
 
 	Query struct {
@@ -111,6 +113,12 @@ type ComplexityRoot struct {
 		GetVNDBGame func(childComplexity int, vndbID string) int
 		SearchF95   func(childComplexity int, query string, page *int) int
 		SearchVndb  func(childComplexity int, query string, page *int, adultsOnly *bool) int
+	}
+
+	SyncResult struct {
+		Errors  func(childComplexity int) int
+		Total   func(childComplexity int) int
+		Updated func(childComplexity int) int
 	}
 
 	VNDBPage struct {
@@ -147,6 +155,7 @@ type MutationResolver interface {
 	SyncF95Version(ctx context.Context, id string) (*model.Game, error)
 	SetF95Credentials(ctx context.Context, username string, password string) (bool, error)
 	TestF95Connection(ctx context.Context) (bool, error)
+	SyncAllF95Versions(ctx context.Context) (*model.SyncResult, error)
 }
 type QueryResolver interface {
 	Games(ctx context.Context, filter *model.GameFilter) ([]*model.Game, error)
@@ -295,6 +304,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.F95SearchResult.Results(childComplexity), true
+	case "F95SearchResult.totalPages":
+		if e.ComplexityRoot.F95SearchResult.TotalPages == nil {
+			break
+		}
+
+		return e.ComplexityRoot.F95SearchResult.TotalPages(childComplexity), true
 
 	case "Game.addedAt":
 		if e.ComplexityRoot.Game.AddedAt == nil {
@@ -471,6 +486,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetF95Credentials(childComplexity, args["username"].(string), args["password"].(string)), true
+	case "Mutation.syncAllF95Versions":
+		if e.ComplexityRoot.Mutation.SyncAllF95Versions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.SyncAllF95Versions(childComplexity), true
 	case "Mutation.syncF95Version":
 		if e.ComplexityRoot.Mutation.SyncF95Version == nil {
 			break
@@ -584,6 +605,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SearchVndb(childComplexity, args["query"].(string), args["page"].(*int), args["adultsOnly"].(*bool)), true
+
+	case "SyncResult.errors":
+		if e.ComplexityRoot.SyncResult.Errors == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncResult.Errors(childComplexity), true
+	case "SyncResult.total":
+		if e.ComplexityRoot.SyncResult.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncResult.Total(childComplexity), true
+	case "SyncResult.updated":
+		if e.ComplexityRoot.SyncResult.Updated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncResult.Updated(childComplexity), true
 
 	case "VNDBPage.count":
 		if e.ComplexityRoot.VNDBPage.Count == nil {
@@ -836,6 +876,7 @@ type F95SearchItem {
 
 type F95SearchResult {
   results: [F95SearchItem!]!
+  totalPages: Int!
 }
 
 type F95Game {
@@ -855,6 +896,12 @@ type F95Game {
 type AppSettings {
   f95Username:  String!
   f95Connected: Boolean!
+}
+
+type SyncResult {
+  total:   Int!
+  updated: Int!
+  errors:  [String!]!
 }
 
 type Query {
@@ -879,6 +926,7 @@ type Mutation {
   syncF95Version(id: ID!): Game!
   setF95Credentials(username: String!, password: String!): Boolean!
   testF95Connection: Boolean!
+  syncAllF95Versions: SyncResult!
 }
 `, BuiltIn: false},
 }
@@ -948,6 +996,8 @@ func (ec *executionContext) childFields_F95SearchResult(ctx context.Context, fie
 	switch field.Name {
 	case "results":
 		return ec.fieldContext_F95SearchResult_results(ctx, field)
+	case "totalPages":
+		return ec.fieldContext_F95SearchResult_totalPages(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type F95SearchResult", field.Name)
 }
@@ -990,6 +1040,18 @@ func (ec *executionContext) childFields_Game(ctx context.Context, field graphql.
 		return ec.fieldContext_Game_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Game", field.Name)
+}
+
+func (ec *executionContext) childFields_SyncResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "total":
+		return ec.fieldContext_SyncResult_total(ctx, field)
+	case "updated":
+		return ec.fieldContext_SyncResult_updated(ctx, field)
+	case "errors":
+		return ec.fieldContext_SyncResult_errors(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SyncResult", field.Name)
 }
 
 func (ec *executionContext) childFields_VNDBPage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1947,6 +2009,29 @@ func (ec *executionContext) fieldContext_F95SearchResult_results(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _F95SearchResult_totalPages(ctx context.Context, field graphql.CollectedField, obj *model.F95SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_F95SearchResult_totalPages(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalPages, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_F95SearchResult_totalPages(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("F95SearchResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _Game_id(ctx context.Context, field graphql.CollectedField, obj *model.Game) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2780,6 +2865,38 @@ func (ec *executionContext) fieldContext_Mutation_testF95Connection(_ context.Co
 	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _Mutation_syncAllF95Versions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_syncAllF95Versions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().SyncAllF95Versions(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncResult) graphql.Marshaler {
+			return ec.marshalNSyncResult2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐSyncResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_syncAllF95Versions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncResult(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_games(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3150,6 +3267,75 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _SyncResult_total(ctx context.Context, field graphql.CollectedField, obj *model.SyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncResult_total(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncResult_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SyncResult_updated(ctx context.Context, field graphql.CollectedField, obj *model.SyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncResult_updated(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Updated, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncResult_updated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SyncResult_errors(ctx context.Context, field graphql.CollectedField, obj *model.SyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncResult_errors(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Errors, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncResult_errors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncResult", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _VNDBPage_results(ctx context.Context, field graphql.CollectedField, obj *model.VNDBPage) (ret graphql.Marshaler) {
@@ -4891,6 +5077,11 @@ func (ec *executionContext) _F95SearchResult(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "totalPages":
+			out.Values[i] = ec._F95SearchResult_totalPages(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5123,6 +5314,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "syncAllF95Versions":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncAllF95Versions(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5321,6 +5519,55 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var syncResultImplementors = []string{"SyncResult"}
+
+func (ec *executionContext) _SyncResult(ctx context.Context, sel ast.SelectionSet, obj *model.SyncResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, syncResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SyncResult")
+		case "total":
+			out.Values[i] = ec._SyncResult_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updated":
+			out.Values[i] = ec._SyncResult_updated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errors":
+			out.Values[i] = ec._SyncResult_errors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6056,6 +6303,20 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNSyncResult2avnᚑtrackerᚋbackendᚋinternalᚋmodelᚐSyncResult(ctx context.Context, sel ast.SelectionSet, v model.SyncResult) graphql.Marshaler {
+	return ec._SyncResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSyncResult2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐSyncResult(ctx context.Context, sel ast.SelectionSet, v *model.SyncResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SyncResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {

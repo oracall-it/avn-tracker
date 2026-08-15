@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"avn-tracker/backend/internal/database"
 	"avn-tracker/backend/internal/f95"
 	"avn-tracker/backend/internal/graph"
 	"avn-tracker/backend/internal/graph/generated"
 	"avn-tracker/backend/internal/repository"
+	"avn-tracker/backend/internal/syncer"
 	"avn-tracker/backend/internal/vndb"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -43,6 +45,7 @@ func main() {
 	}
 
 	settingsRepo := repository.NewSettingsRepo(pool)
+	gameRepo := repository.NewGameRepo(pool)
 	f95Client := f95.NewClient()
 
 	// Restore F95 session from stored credentials if available.
@@ -54,11 +57,33 @@ func main() {
 		}
 	}
 
+	appSyncer := syncer.New(gameRepo, f95Client)
+
+	// Startup sweep: wait for login to settle, then check all F95 games for updates.
+	go func() {
+		time.Sleep(15 * time.Second)
+		log.Println("[Sync] Running startup F95 version sweep")
+		r := appSyncer.SyncAll(context.Background())
+		log.Printf("[Sync] Startup sweep: %d/%d updated, %d errors", r.Updated, r.Total, len(r.Errors))
+	}()
+
+	// Weekly cron: re-check all F95 games every 7 days.
+	go func() {
+		ticker := time.NewTicker(7 * 24 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			log.Println("[Sync] Running weekly F95 version sweep")
+			r := appSyncer.SyncAll(context.Background())
+			log.Printf("[Sync] Weekly sweep: %d/%d updated, %d errors", r.Updated, r.Total, len(r.Errors))
+		}
+	}()
+
 	resolver := &graph.Resolver{
-		Repo:     repository.NewGameRepo(pool),
+		Repo:     gameRepo,
 		Settings: settingsRepo,
 		VNDB:     vndb.NewClient(),
 		F95:      f95Client,
+		Syncer:   appSyncer,
 	}
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))

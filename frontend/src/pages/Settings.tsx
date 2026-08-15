@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
-import { Download, Upload, ArrowLeft, Loader2, Check, X, Wifi } from 'lucide-react'
+import { Download, Upload, ArrowLeft, Loader2, Check, X, Wifi, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { EXPORT_LIBRARY, IMPORT_LIBRARY, SET_F95_CREDENTIALS, TEST_F95_CONNECTION } from '../graphql/mutations'
+import { EXPORT_LIBRARY, IMPORT_LIBRARY, SET_F95_CREDENTIALS, TEST_F95_CONNECTION, SYNC_ALL_F95_VERSIONS } from '../graphql/mutations'
 import { GET_GAMES, GET_APP_SETTINGS } from '../graphql/queries'
-import { AppSettings } from '../types/game'
+import { AppSettings, SyncResult } from '../types/game'
 
 export function Settings() {
   const navigate = useNavigate()
@@ -24,6 +24,13 @@ export function Settings() {
 
   const [setCredentials] = useMutation(SET_F95_CREDENTIALS, { refetchQueries: [GET_APP_SETTINGS] })
   const [testConnection] = useMutation(TEST_F95_CONNECTION, { refetchQueries: [GET_APP_SETTINGS] })
+
+  // Sync all state
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
+  const [syncAllF95] = useMutation<{ syncAllF95Versions: SyncResult }>(SYNC_ALL_F95_VERSIONS, {
+    refetchQueries: [GET_GAMES],
+  })
 
   const settings = settingsData?.appSettings
 
@@ -68,6 +75,19 @@ export function Settings() {
       setF95Error(err instanceof Error ? err.message : 'Login failed')
     } finally {
       setF95Saving(false)
+    }
+  }
+
+  const handleSyncAll = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const { data } = await syncAllF95()
+      if (data) setSyncResult(data.syncAllF95Versions)
+    } catch (err: unknown) {
+      setSyncResult({ total: 0, updated: 0, errors: [err instanceof Error ? err.message : 'Sync failed'] })
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -175,6 +195,40 @@ export function Settings() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* F95Zone sync */}
+        <div className={card}>
+          <h2 className="font-bold text-stone-900 dark:text-stone-100 mb-1">F95Zone Sync</h2>
+          <p className="text-sm text-stone-500 dark:text-stone-500 mb-4">
+            Check all F95Zone games in your library for version updates. Also runs automatically on startup and weekly.
+          </p>
+
+          {syncResult && (
+            <div className={`flex items-start gap-2 mb-3 p-3 rounded-xl border text-xs ${
+              syncResult.errors.length > 0
+                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+            }`}>
+              <div>
+                <p>{syncResult.updated} of {syncResult.total} games updated.</p>
+                {syncResult.errors.length > 0 && (
+                  <ul className="mt-1 list-disc list-inside space-y-0.5">
+                    {syncResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleSyncAll}
+            disabled={syncing || !settings?.f95Connected}
+            className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors"
+          >
+            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {syncing ? 'Syncing…' : 'Sync all'}
+          </button>
         </div>
 
         {/* Export */}

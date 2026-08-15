@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -16,43 +19,70 @@ const searchURL = baseURL + "/search/search/"
 // Confirmed from @millenniumearl/f95api source: categoryToID("games") = 2.
 const gamesForumID = "2"
 
-// Search performs a POST to the XenForo search endpoint and returns thread listings.
-// XenForo search requires a valid _xfToken with every POST — we refresh it first.
-func (c *Client) Search(ctx context.Context, query string, page int) ([]*SearchItem, error) {
+// searchIDRe extracts the numeric search ID from XenForo search result URLs.
+// e.g. "/search/665874710/?q=..." → "665874710"
+var searchIDRe = regexp.MustCompile(`/search/(\d+)/`)
+
+// Search fetches a page of F95Zone search results for the given query.
+//
+// Page 1 does a fresh POST to XenForo's search endpoint, which creates a new
+// search session and returns the first page. The resulting search ID is cached
+// so that subsequent page requests can GET the pre-computed results without
+// POSTing again (which would create a new search each time).
+func (c *Client) Search(ctx context.Context, query string, page int) (*SearchPage, error) {
 	if !c.IsLoggedIn() {
 		return nil, fmt.Errorf("not logged in to F95Zone")
 	}
 
-	// Refresh the CSRF token before every POST. Without a synchronized
-	// _xfToken + xf_csrf pair, XenForo returns a "Security error" 400.
-	if err := c.fetchXFToken(ctx); err != nil {
-		return nil, fmt.Errorf("refresh token: %w", err)
-	}
+	normalizedQuery := strings.ToLower(strings.TrimSpace(query))
 
-	token := c.getStoredToken()
-	if token == "" {
-		return nil, fmt.Errorf("no _xfToken available — login may have failed")
-	}
+	var body []byte
 
-	// Build POST form. Standard URL encoding is fine for POST bodies — XenForo
-	// parses percent-encoded bracket keys (c%5Bnodes%5D%5B0%5D) correctly.
-	// This mirrors how @millenniumearl/f95api uses URLSearchParams.
-	form := url.Values{}
-	form.Set("_xfToken", token)
-	form.Set("keywords", query)
-	form.Set("search_type", "post")
-	form.Set("c[child_nodes]", "1")
-	form.Set("c[nodes][0]", gamesForumID)
-	form.Set("order", "relevance")
-	if page > 1 {
-		form.Set("page", fmt.Sprintf("%d", page))
-	}
+	if page <= 1 {
+		// Page 1: POST to create a fresh search session.
+		if err := c.fetchXFToken(ctx); err != nil {
+			return nil, fmt.Errorf("refresh token: %w", err)
+		}
+		token := c.getStoredToken()
+		if token == "" {
+			return nil, fmt.Errorf("no _xfToken available — login may have failed")
+		}
 
-	log.Printf("[F95] Search POST to %s (keywords=%q, token=%s…)", searchURL, query, token[:min(len(token), 8)])
+		form := url.Values{}
+		form.Set("_xfToken", token)
+		form.Set("keywords", query)
+		form.Set("search_type", "thread")
+		form.Set("c[child_nodes]", "1")
+		form.Set("c[nodes][0]", gamesForumID)
+		form.Set("order", "relevance")
 
-	body, err := c.postForm(ctx, searchURL, form)
-	if err != nil {
-		return nil, fmt.Errorf("search POST: %w", err)
+		log.Printf("[F95] Search POST to %s (keywords=%q, token=%s…)", searchURL, query, token[:min(len(token), 8)])
+
+		var err error
+		body, err = c.postForm(ctx, searchURL, form)
+		if err != nil {
+			return nil, fmt.Errorf("search POST: %w", err)
+		}
+	} else {
+		// Page 2+: GET the pre-computed search results using the cached search ID.
+		c.mu.RLock()
+		searchID := c.searchIDCache[normalizedQuery]
+		c.mu.RUnlock()
+
+		if searchID == "" {
+			return nil, fmt.Errorf("no cached search session for %q — search page 1 first", query)
+		}
+
+		pageURL := fmt.Sprintf("%s/search/%s/?page=%d&q=%s&o=relevance",
+			baseURL, searchID, page, url.QueryEscape(query))
+
+		log.Printf("[F95] Search GET page %d: %s", page, pageURL)
+
+		var err error
+		body, err = c.fetchPage(ctx, pageURL, 5*time.Minute)
+		if err != nil {
+			return nil, fmt.Errorf("search GET page %d: %w", page, err)
+		}
 	}
 
 	log.Printf("[F95] Search response: %d bytes", len(body))
@@ -69,6 +99,29 @@ func (c *Client) Search(ctx context.Context, query string, page int) ([]*SearchI
 	if errorMsg != "" {
 		log.Printf("[F95] Search page error: %q", errorMsg)
 	}
+
+	// On page 1, extract and cache the XenForo search ID so page 2+ can GET
+	// the pre-computed results without triggering a new POST search.
+	if page <= 1 {
+		doc.Find("ul.pageNav-main li.pageNav-page a").Each(func(_ int, s *goquery.Selection) {
+			href, _ := s.Attr("href")
+			if m := searchIDRe.FindStringSubmatch(href); len(m) > 1 {
+				id := m[1]
+				c.mu.Lock()
+				c.searchIDCache[normalizedQuery] = id
+				c.mu.Unlock()
+				return
+			}
+		})
+	}
+
+	// Parse total page count from the last non-skip page number in the paginator.
+	totalPages := 1
+	doc.Find("ul.pageNav-main li.pageNav-page:not(.pageNav-page--skip) a").Each(func(_ int, s *goquery.Selection) {
+		if n, err := strconv.Atoi(strings.TrimSpace(s.Text())); err == nil && n > totalPages {
+			totalPages = n
+		}
+	})
 
 	// THREAD_SEARCH.BODY = "div.contentRow-main" (from css-selector.ts)
 	rows := doc.Find("div.contentRow-main")
@@ -194,5 +247,5 @@ func (c *Client) Search(ctx context.Context, query string, page int) ([]*SearchI
 		})
 	})
 
-	return items, nil
+	return &SearchPage{Items: items, TotalPages: totalPages}, nil
 }

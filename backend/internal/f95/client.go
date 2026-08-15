@@ -23,12 +23,13 @@ type cacheEntry struct {
 }
 
 type Client struct {
-	http     *http.Client
-	limiter  *rate.Limiter
-	mu       sync.RWMutex
-	cache    map[string]cacheEntry
-	loggedIn bool
-	token    string // _xfToken CSRF token, required for all POST requests
+	http          *http.Client
+	limiter       *rate.Limiter
+	mu            sync.RWMutex
+	cache         map[string]cacheEntry
+	loggedIn      bool
+	token         string            // _xfToken CSRF token, required for all POST requests
+	searchIDCache map[string]string // normalized query → XenForo search ID
 }
 
 func NewClient() *Client {
@@ -38,8 +39,9 @@ func NewClient() *Client {
 			Timeout: 20 * time.Second,
 			Jar:     jar,
 		},
-		limiter: rate.NewLimiter(rate.Limit(1.0), 5),
-		cache:   make(map[string]cacheEntry),
+		limiter:       rate.NewLimiter(rate.Limit(1.0), 5),
+		cache:         make(map[string]cacheEntry),
+		searchIDCache: make(map[string]string),
 	}
 }
 

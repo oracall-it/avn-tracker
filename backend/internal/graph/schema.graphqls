@@ -89,6 +89,7 @@ type F95SearchItem {
 
 type F95SearchResult {
   results: [F95SearchItem!]!
+  totalPages: Int!
 }
 
 type F95Game {
@@ -108,6 +109,12 @@ type F95Game {
 type AppSettings {
   f95Username:  String!
   f95Connected: Boolean!
+}
+
+type SyncResult {
+  total:   Int!
+  updated: Int!
+  errors:  [String!]!
 }
 
 type Query {
@@ -132,4 +139,5 @@ type Mutation {
   syncF95Version(id: ID!): Game!
   setF95Credentials(username: String!, password: String!): Boolean!
   testF95Connection: Boolean!
+  syncAllF95Versions: SyncResult!
 }

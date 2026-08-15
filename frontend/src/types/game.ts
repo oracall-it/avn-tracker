@@ -76,6 +76,7 @@ export interface F95SearchItem {
 
 export interface F95SearchResult {
   results: F95SearchItem[]
+  totalPages: number
 }
 
 export interface F95Game {
@@ -95,6 +96,12 @@ export interface F95Game {
 export interface AppSettings {
   f95Username: string
   f95Connected: boolean
+}
+
+export interface SyncResult {
+  total: number
+  updated: number
+  errors: string[]
 }
 
 export const STATUS_LABELS: Record<GameStatus, string> = {

@@ -39,7 +39,8 @@ type F95SearchItem struct {
 }
 
 type F95SearchResult struct {
-	Results []*F95SearchItem `json:"results"`
+	Results    []*F95SearchItem `json:"results"`
+	TotalPages int              `json:"totalPages"`
 }
 
 type Game struct {
@@ -89,6 +90,12 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type SyncResult struct {
+	Total   int      `json:"total"`
+	Updated int      `json:"updated"`
+	Errors  []string `json:"errors"`
 }
 
 type VNDBPage struct {

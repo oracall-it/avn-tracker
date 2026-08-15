@@ -24,3 +24,9 @@ type SearchItem struct {
 	Engine    string
 	Tags      []string
 }
+
+// SearchPage wraps a page of search results with pagination metadata.
+type SearchPage struct {
+	Items      []*SearchItem
+	TotalPages int
+}

@@ -125,6 +125,20 @@ test.describe('Settings page', () => {
     await expect(badge).toBeVisible()
   })
 
+  // ── F95Zone sync ─────────────────────────────────────────────────────────
+
+  test('F95Zone Sync section is visible', async ({ page }) => {
+    await page.goto('/settings')
+    await expect(page.getByText('F95Zone Sync')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sync all' })).toBeVisible()
+  })
+
+  test('Sync all button is disabled when not connected to F95Zone', async ({ page }) => {
+    await page.goto('/settings')
+    // In E2E environment F95Zone credentials are not configured, so button is disabled.
+    await expect(page.getByRole('button', { name: 'Sync all' })).toBeDisabled()
+  })
+
   // ── Theme ─────────────────────────────────────────────────────────────────
 
   test('theme toggle switches between light and dark mode', async ({ page }) => {

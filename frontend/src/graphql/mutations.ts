@@ -72,3 +72,13 @@ export const TEST_F95_CONNECTION = gql`
     testF95Connection
   }
 `
+
+export const SYNC_ALL_F95_VERSIONS = gql`
+  mutation SyncAllF95Versions {
+    syncAllF95Versions {
+      total
+      updated
+      errors
+    }
+  }
+`

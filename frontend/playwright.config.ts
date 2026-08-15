@@ -8,7 +8,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   timeout: 30_000,
   use: {
-    baseURL: process.env.BASE_URL ?? 'http://localhost:3001',
+    baseURL: process.env.BASE_URL ?? 'http://localhost:5173',
     headless: !!process.env.CI,   // headed locally, headless in CI
     extraHTTPHeaders: { 'Content-Type': 'application/json' },
     trace: 'on-first-retry',
