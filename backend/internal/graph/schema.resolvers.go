@@ -162,10 +162,19 @@ func (r *mutationResolver) SyncF95Version(ctx context.Context, id string) (*mode
 	if err != nil {
 		return nil, fmt.Errorf("scrape F95Zone thread: %w", err)
 	}
-	if f95Game.Version == "" {
+
+	devStatus := model.DevStatusOngoing
+	switch f95Game.Status {
+	case "Complete":
+		devStatus = model.DevStatusComplete
+	case "Abandoned":
+		devStatus = model.DevStatusAbandoned
+	}
+
+	if f95Game.Version == "" && devStatus == game.DevStatus {
 		return game, nil
 	}
-	return r.Repo.UpdateLatestVersion(ctx, id, f95Game.Version)
+	return r.Repo.UpdateF95Sync(ctx, id, f95Game.Version, devStatus)
 }
 
 // SetF95Credentials is the resolver for the setF95Credentials field.

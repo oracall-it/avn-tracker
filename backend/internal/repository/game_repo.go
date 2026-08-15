@@ -219,6 +219,26 @@ func (r *GameRepo) UpdateLatestVersion(ctx context.Context, id, latestVersion st
 	return scanGame(row)
 }
 
+func (r *GameRepo) UpdateF95Sync(ctx context.Context, id, latestVersion string, devStatus model.DevStatus) (*model.Game, error) {
+	var q string
+	var args []any
+	if latestVersion != "" {
+		q = `UPDATE games SET latest_version=$1, dev_status=$2, updated_at=$3 WHERE id=$4
+		     RETURNING id, title, developer, cover_url, status, dev_status,
+		               my_version, latest_version, download_url, tags, notes, description,
+		               vndb_id, f95_id, added_at, updated_at`
+		args = []any{latestVersion, string(devStatus), time.Now(), id}
+	} else {
+		q = `UPDATE games SET dev_status=$1, updated_at=$2 WHERE id=$3
+		     RETURNING id, title, developer, cover_url, status, dev_status,
+		               my_version, latest_version, download_url, tags, notes, description,
+		               vndb_id, f95_id, added_at, updated_at`
+		args = []any{string(devStatus), time.Now(), id}
+	}
+	row := r.pool.QueryRow(ctx, q, args...)
+	return scanGame(row)
+}
+
 type ExportRow struct {
 	ID            string    `json:"id"`
 	Title         string    `json:"title"`

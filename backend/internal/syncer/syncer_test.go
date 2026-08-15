@@ -14,26 +14,31 @@ import (
 
 // ─── fakes ───────────────────────────────────────────────────────────────────
 
+type updateRecord struct {
+	version   string
+	devStatus model.DevStatus
+}
+
 type fakeRepo struct {
 	games     []*model.Game
 	listErr   error
 	updateErr error
-	updated   map[string]string // id → new version
+	updated   map[string]updateRecord // id → record
 }
 
 func (r *fakeRepo) ListWithF95ID(_ context.Context) ([]*model.Game, error) {
 	return r.games, r.listErr
 }
 
-func (r *fakeRepo) UpdateLatestVersion(_ context.Context, id, v string) (*model.Game, error) {
+func (r *fakeRepo) UpdateF95Sync(_ context.Context, id, v string, ds model.DevStatus) (*model.Game, error) {
 	if r.updateErr != nil {
 		return nil, r.updateErr
 	}
 	if r.updated == nil {
-		r.updated = make(map[string]string)
+		r.updated = make(map[string]updateRecord)
 	}
-	r.updated[id] = v
-	return &model.Game{ID: id, LatestVersion: v}, nil
+	r.updated[id] = updateRecord{version: v, devStatus: ds}
+	return &model.Game{ID: id, LatestVersion: v, DevStatus: ds}, nil
 }
 
 type fakeF95 struct {
@@ -63,6 +68,7 @@ func gameWithF95ID(id, title, latestVersion, f95id string) *model.Game {
 		Title:         title,
 		LatestVersion: latestVersion,
 		F95Id:         f95ID(f95id),
+		DevStatus:     model.DevStatusOngoing,
 	}
 }
 
@@ -140,8 +146,8 @@ func TestSyncAll_VersionUpdated(t *testing.T) {
 	if len(r.Errors) != 0 {
 		t.Errorf("unexpected errors: %v", r.Errors)
 	}
-	if repo.updated["g1"] != "v2.0" {
-		t.Errorf("expected repo to record v2.0; got %q", repo.updated["g1"])
+	if repo.updated["g1"].version != "v2.0" {
+		t.Errorf("expected repo to record v2.0; got %q", repo.updated["g1"].version)
 	}
 }
 
@@ -208,6 +214,26 @@ func TestSyncAll_UpdateError_RecordedAndContinues(t *testing.T) {
 	}
 	if len(r.Errors) == 0 || !strings.Contains(r.Errors[0], "constraint violation") {
 		t.Errorf("expected update error in result; got %v", r.Errors)
+	}
+}
+
+func TestSyncAll_StatusUpdated(t *testing.T) {
+	game := gameWithF95ID("g1", "My Game", "v1.0", "12345")
+	repo := &fakeRepo{games: []*model.Game{game}}
+	scraper := &fakeF95{
+		loggedIn: true,
+		games: map[string]*f95.Game{
+			"https://f95zone.to/threads/12345/": {Version: "v1.0", Status: "Complete"},
+		},
+	}
+	s := New(repo, scraper)
+	r := s.SyncAll(context.Background())
+
+	if r.Updated != 1 {
+		t.Errorf("expected Updated=1 (status changed); got %d", r.Updated)
+	}
+	if repo.updated["g1"].devStatus != model.DevStatusComplete {
+		t.Errorf("expected devStatus COMPLETE; got %q", repo.updated["g1"].devStatus)
 	}
 }
 
@@ -287,8 +313,8 @@ func (r *blockingFakeRepo) ListWithF95ID(_ context.Context) ([]*model.Game, erro
 	return []*model.Game{r.game}, nil
 }
 
-func (r *blockingFakeRepo) UpdateLatestVersion(_ context.Context, id, v string) (*model.Game, error) {
-	return &model.Game{ID: id, LatestVersion: v}, nil
+func (r *blockingFakeRepo) UpdateF95Sync(_ context.Context, id, v string, ds model.DevStatus) (*model.Game, error) {
+	return &model.Game{ID: id, LatestVersion: v, DevStatus: ds}, nil
 }
 
 func TestSyncAll_ContextCancelled_StopsMidLoop(t *testing.T) {

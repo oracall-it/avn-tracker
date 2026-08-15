@@ -13,7 +13,7 @@ import (
 
 type gameRepo interface {
 	ListWithF95ID(ctx context.Context) ([]*model.Game, error)
-	UpdateLatestVersion(ctx context.Context, id, latestVersion string) (*model.Game, error)
+	UpdateF95Sync(ctx context.Context, id, latestVersion string, devStatus model.DevStatus) (*model.Game, error)
 }
 
 // f95Scraper is the subset of f95.Client used by Syncer.
@@ -86,12 +86,30 @@ func (s *Syncer) SyncAll(ctx context.Context) Result {
 			log.Printf("[Sync] [%d/%d] %s: scrape error: %v", i+1, len(games), game.Title, err)
 			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", game.Title, err))
 		}
-		if err == nil && f95Game.Version != "" && f95Game.Version != game.LatestVersion {
-			if _, err := s.repo.UpdateLatestVersion(ctx, game.ID, f95Game.Version); err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("%s update: %v", game.Title, err))
-			} else {
-				log.Printf("[Sync] [%d/%d] %s: %q → %q", i+1, len(games), game.Title, game.LatestVersion, f95Game.Version)
-				result.Updated++
+		if err == nil {
+			devStatus := model.DevStatusOngoing
+			switch f95Game.Status {
+			case "Complete":
+				devStatus = model.DevStatusComplete
+			case "Abandoned":
+				devStatus = model.DevStatusAbandoned
+			}
+
+			versionChanged := f95Game.Version != "" && f95Game.Version != game.LatestVersion
+			statusChanged := devStatus != game.DevStatus
+
+			if versionChanged || statusChanged {
+				newVersion := game.LatestVersion
+				if versionChanged {
+					newVersion = f95Game.Version
+				}
+				if _, err := s.repo.UpdateF95Sync(ctx, game.ID, newVersion, devStatus); err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("%s update: %v", game.Title, err))
+				} else {
+					log.Printf("[Sync] [%d/%d] %s: version %q → %q, status %q → %q",
+						i+1, len(games), game.Title, game.LatestVersion, newVersion, game.DevStatus, devStatus)
+					result.Updated++
+				}
 			}
 		}
 
