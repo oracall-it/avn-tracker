@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useQuery } from '@apollo/client'
 import { LayoutGrid, List, Plus, Loader2 } from 'lucide-react'
 import { GET_GAMES } from '../graphql/queries'
@@ -22,10 +22,10 @@ export function Library() {
   })
 
   const games = data?.games ?? []
+  const seenTags = useRef(new Set<string>())
   const allTags = useMemo(() => {
-    const set = new Set<string>()
-    games.forEach(g => g.tags.forEach(t => set.add(t)))
-    return [...set].sort()
+    games.forEach(g => g.tags.forEach(t => seenTags.current.add(t)))
+    return [...seenTags.current].sort()
   }, [games])
 
   const setViewPersisted = (v: View) => { setView(v); localStorage.setItem('view', v) }

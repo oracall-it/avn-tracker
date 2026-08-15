@@ -1,4 +1,5 @@
-import { Search, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Check, ChevronDown, Hash, Search, X } from 'lucide-react'
 import { GameStatus, GameFilter, STATUS_LABELS } from '../types/game'
 
 const ALL_STATUSES: (GameStatus | null)[] = [null, 'PLAYING', 'WANT', 'COMPLETED', 'ON_HOLD', 'DROPPED']
@@ -12,6 +13,148 @@ interface Props {
 const pillBase = 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors border'
 const pillActive = 'bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:border-amber-500'
 const pillInactive = 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-900 dark:hover:text-stone-200'
+
+function TagSelect({ tags, selected, onChange }: {
+  tags: string[]
+  selected: string[]
+  onChange: (tags: string[]) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onMouse = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onMouse)
+    return () => document.removeEventListener('mousedown', onMouse)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const filtered = search
+    ? tags.filter(t => t.toLowerCase().includes(search.toLowerCase()))
+    : tags
+
+  const toggle = (tag: string) => {
+    onChange(selected.includes(tag) ? selected.filter(t => t !== tag) : [...selected, tag])
+  }
+
+  const hasSelection = selected.length > 0
+
+  const label = selected.length === 0
+    ? 'All tags'
+    : selected.length === 1
+      ? selected[0]
+      : `${selected.length} tags`
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); setSearch('') }}
+        className={`flex items-center gap-1.5 bg-white dark:bg-stone-900 border rounded-xl px-3 py-2 text-sm transition-colors focus:outline-none focus:border-amber-400 dark:focus:border-amber-600 min-w-52 w-52
+          ${open || hasSelection
+            ? 'border-amber-400 dark:border-amber-600'
+            : 'border-stone-200 dark:border-stone-700'
+          }
+          ${hasSelection
+            ? 'text-amber-700 dark:text-amber-400'
+            : 'text-stone-700 dark:text-stone-300'
+          }`}
+      >
+        <Hash size={13} className="flex-none text-stone-400 dark:text-stone-500" />
+        <span className="flex-1 text-left">{label}</span>
+        {hasSelection ? (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={e => { e.stopPropagation(); onChange([]); setOpen(false) }}
+            onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); onChange([]); setOpen(false) } }}
+            className="flex-none text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
+          >
+            <X size={13} />
+          </span>
+        ) : (
+          <ChevronDown
+            size={13}
+            className={`flex-none text-stone-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1.5 right-0 z-30 w-64 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg overflow-hidden">
+          {tags.length > 8 && (
+            <div className="p-2 border-b border-stone-100 dark:border-stone-800">
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search tags…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-stone-50 dark:bg-stone-800 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none"
+              />
+            </div>
+          )}
+
+          <div className="max-h-64 overflow-y-auto py-1">
+            {filtered.map(tag => {
+              const isSelected = selected.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggle(tag)}
+                  className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2
+                    ${isSelected
+                      ? 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                      : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+                    }`}
+                >
+                  <span className={`w-4 h-4 flex-none rounded border flex items-center justify-center transition-colors
+                    ${isSelected
+                      ? 'bg-amber-500 border-amber-500 dark:bg-amber-600 dark:border-amber-600'
+                      : 'border-stone-300 dark:border-stone-600'
+                    }`}
+                  >
+                    {isSelected && <Check size={11} strokeWidth={3} className="text-white" />}
+                  </span>
+                  <span className="truncate">{tag}</span>
+                </button>
+              )
+            })}
+
+            {filtered.length === 0 && (
+              <p className="px-3 py-4 text-xs text-center text-stone-400 dark:text-stone-600">
+                No tags match.
+              </p>
+            )}
+          </div>
+
+          {hasSelection && (
+            <div className="border-t border-stone-100 dark:border-stone-800 px-3 py-2">
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function FilterBar({ filter, onChange, tags }: Props) {
   const set = (patch: Partial<GameFilter>) => onChange({ ...filter, ...patch })
@@ -59,16 +202,11 @@ export function FilterBar({ filter, onChange, tags }: Props) {
         </div>
 
         {tags.length > 0 && (
-          <select
-            value={filter.tag ?? ''}
-            onChange={e => set({ tag: e.target.value || null })}
-            className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-700 dark:text-stone-300 focus:outline-none focus:border-amber-400 dark:focus:border-amber-600 transition-colors"
-          >
-            <option value="">All tags</option>
-            {tags.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
-          </select>
+          <TagSelect
+            tags={tags}
+            selected={filter.tags ?? []}
+            onChange={tags => set({ tags: tags.length ? tags : undefined })}
+          />
         )}
       </div>
     </div>
