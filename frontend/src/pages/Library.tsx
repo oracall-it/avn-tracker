@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery } from '@apollo/client'
-import { LayoutGrid, List, Plus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LayoutGrid, List, Plus, Loader2, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { GET_GAMES } from '../graphql/queries'
 import { Game, GameFilter } from '../types/game'
 import { GameCard } from '../components/GameCard'
@@ -11,6 +11,67 @@ import { GameModal } from '../components/GameModal'
 type View = 'grid' | 'list'
 
 const PER_PAGE_OPTIONS = [12, 24, 48, 96]
+const PER_PAGE_ITEMS = [
+  ...PER_PAGE_OPTIONS.map(n => ({ value: n, label: `${n} / page` })),
+  { value: 0, label: 'All' },
+]
+
+function PerPageSelect({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onMouse = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onMouse)
+    return () => document.removeEventListener('mousedown', onMouse)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const label = value === 0 ? 'All' : `${value} / page`
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-1.5 w-32 bg-white dark:bg-stone-900 border rounded-xl px-3 py-2 text-sm transition-colors focus:outline-none
+          ${open ? 'border-amber-400 dark:border-amber-600' : 'border-stone-200 dark:border-stone-700'}
+          text-stone-700 dark:text-stone-300`}
+      >
+        <span className="flex-1 text-left">{label}</span>
+        <ChevronDown size={13} className={`flex-none text-stone-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1.5 right-0 z-30 w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg overflow-hidden py-1">
+          {PER_PAGE_ITEMS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false) }}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors
+                ${opt.value === value
+                  ? 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                  : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+                }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function Library() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('view') as View) ?? 'grid')
@@ -67,16 +128,7 @@ export function Library() {
         </div>
         <div className="flex items-center gap-2">
           {/* Per-page selector */}
-          <select
-            value={perPage}
-            onChange={e => setPerPagePersisted(Number(e.target.value))}
-            className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-sm px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 focus:outline-none focus:border-amber-400 dark:focus:border-amber-600 transition-colors"
-          >
-            {PER_PAGE_OPTIONS.map(n => (
-              <option key={n} value={n}>{n} / page</option>
-            ))}
-            <option value={0}>All</option>
-          </select>
+          <PerPageSelect value={perPage} onChange={setPerPagePersisted} />
 
           {/* View toggle */}
           <div className="flex bg-stone-100 dark:bg-stone-800 rounded-xl p-1 gap-0.5">
