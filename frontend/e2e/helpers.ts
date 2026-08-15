@@ -44,3 +44,22 @@ export async function cleanupE2EGames(request: APIRequestContext) {
     games.filter(g => g.title.startsWith('[E2E]')).map(g => deleteTestGame(request, g.id))
   )
 }
+
+export async function createTestLink(request: APIRequestContext, title = '[E2E] Test Link', url = 'https://example.com') {
+  const data = await gql(request, `
+    mutation AddRecommendationLink($url: String!, $title: String!) {
+      addRecommendationLink(url: $url, title: $title) { id url title }
+    }
+  `, { url, title })
+  return data.addRecommendationLink as { id: string; url: string; title: string }
+}
+
+export async function cleanupE2ELinks(request: APIRequestContext) {
+  const data = await gql(request, `{ recommendationLinks { id title } }`)
+  const links: { id: string; title: string }[] = data.recommendationLinks
+  await Promise.all(
+    links
+      .filter(l => l.title.startsWith('[E2E]'))
+      .map(l => gql(request, `mutation { deleteRecommendationLink(id: "${l.id}") }`))
+  )
+}
