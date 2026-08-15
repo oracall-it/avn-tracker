@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { useQuery } from '@apollo/client'
-import { LayoutGrid, List, Plus, Loader2 } from 'lucide-react'
+import { LayoutGrid, List, Plus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { GET_GAMES } from '../graphql/queries'
 import { Game, GameFilter } from '../types/game'
 import { GameCard } from '../components/GameCard'
@@ -10,11 +10,18 @@ import { GameModal } from '../components/GameModal'
 
 type View = 'grid' | 'list'
 
+const PER_PAGE_OPTIONS = [12, 24, 48, 96]
+
 export function Library() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('view') as View) ?? 'grid')
   const [filter, setFilter] = useState<GameFilter>({})
   const [editGame, setEditGame] = useState<Game | null>(null)
   const [showAdd, setShowAdd] = useState(false)
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState<number>(() => {
+    const v = localStorage.getItem('lib-per-page')
+    return v ? Number(v) : 24
+  })
 
   const { data, loading, error } = useQuery<{ games: Game[] }>(GET_GAMES, {
     variables: { filter },
@@ -28,6 +35,18 @@ export function Library() {
     return [...seenTags.current].sort()
   }, [games])
 
+  const totalGames = games.length
+  const totalPages = perPage === 0 ? 1 : Math.ceil(totalGames / perPage)
+  const pagedGames = perPage === 0 ? games : games.slice((page - 1) * perPage, page * perPage)
+
+  const updateFilter = (f: GameFilter) => { setFilter(f); setPage(1) }
+
+  const setPerPagePersisted = (n: number) => {
+    setPerPage(n)
+    setPage(1)
+    localStorage.setItem('lib-per-page', String(n))
+  }
+
   const setViewPersisted = (v: View) => { setView(v); localStorage.setItem('view', v) }
   const updateCount = games.filter(g => g.hasUpdate).length
 
@@ -38,7 +57,7 @@ export function Library() {
         <div>
           <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">My Library</h1>
           <p className="text-sm text-stone-500 dark:text-stone-500 mt-0.5">
-            {games.length} {games.length === 1 ? 'game' : 'games'}
+            {totalGames} {totalGames === 1 ? 'game' : 'games'}
             {updateCount > 0 && (
               <span className="ml-2 text-amber-600 dark:text-amber-400 font-medium">
                 · {updateCount} {updateCount === 1 ? 'update' : 'updates'} available
@@ -47,6 +66,18 @@ export function Library() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Per-page selector */}
+          <select
+            value={perPage}
+            onChange={e => setPerPagePersisted(Number(e.target.value))}
+            className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-sm px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 focus:outline-none focus:border-amber-400 dark:focus:border-amber-600 transition-colors"
+          >
+            {PER_PAGE_OPTIONS.map(n => (
+              <option key={n} value={n}>{n} / page</option>
+            ))}
+            <option value={0}>All</option>
+          </select>
+
           {/* View toggle */}
           <div className="flex bg-stone-100 dark:bg-stone-800 rounded-xl p-1 gap-0.5">
             <button
@@ -76,7 +107,7 @@ export function Library() {
 
       {/* Filters */}
       <div className="mb-6">
-        <FilterBar filter={filter} onChange={setFilter} tags={allTags} />
+        <FilterBar filter={filter} onChange={updateFilter} tags={allTags} />
       </div>
 
       {/* Content */}
@@ -99,15 +130,15 @@ export function Library() {
         </div>
       )}
 
-      {view === 'grid' && games.length > 0 && (
+      {view === 'grid' && pagedGames.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {games.map(game => (
+          {pagedGames.map(game => (
             <GameCard key={game.id} game={game} onEdit={setEditGame} />
           ))}
         </div>
       )}
 
-      {view === 'list' && games.length > 0 && (
+      {view === 'list' && pagedGames.length > 0 && (
         <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -123,12 +154,44 @@ export function Library() {
                 </tr>
               </thead>
               <tbody>
-                {games.map(game => (
+                {pagedGames.map(game => (
                   <GameRow key={game.id} game={game} onEdit={setEditGame} />
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-10">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+            let p: number
+            if (totalPages <= 7) p = i + 1
+            else if (page <= 4) p = i + 1
+            else if (page >= totalPages - 3) p = totalPages - 6 + i
+            else p = page - 3 + i
+            return (
+              <button key={p} onClick={() => setPage(p)}
+                className={`w-10 h-10 rounded-xl text-sm font-semibold transition-colors ${p === page ? 'bg-amber-600 text-white shadow-sm' : 'border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800'}`}
+              >{p}</button>
+            )
+          })}
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
       )}
 
