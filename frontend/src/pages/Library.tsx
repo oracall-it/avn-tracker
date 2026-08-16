@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@apollo/client'
 import { LayoutGrid, List, Plus, Loader2, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { GET_GAMES } from '../graphql/queries'
@@ -74,11 +75,12 @@ function PerPageSelect({ value, onChange }: { value: number; onChange: (n: numbe
 }
 
 export function Library() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<View>(() => (localStorage.getItem('view') as View) ?? 'grid')
   const [filter, setFilter] = useState<GameFilter>({})
   const [editGame, setEditGame] = useState<Game | null>(null)
   const [showAdd, setShowAdd] = useState(false)
-  const [page, setPage] = useState(1)
+  const page = Number(searchParams.get('page') ?? '1')
   const [perPage, setPerPage] = useState<number>(() => {
     const v = localStorage.getItem('lib-per-page')
     return v ? Number(v) : 24
@@ -99,6 +101,10 @@ export function Library() {
   const totalGames = games.length
   const totalPages = perPage === 0 ? 1 : Math.ceil(totalGames / perPage)
   const pagedGames = perPage === 0 ? games : games.slice((page - 1) * perPage, page * perPage)
+
+  const setPage = (p: number) => {
+    setSearchParams(prev => { const n = new URLSearchParams(prev); n.set('page', String(p)); return n }, { replace: true })
+  }
 
   const updateFilter = (f: GameFilter) => { setFilter(f); setPage(1) }
 
@@ -219,7 +225,7 @@ export function Library() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
           <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page <= 1}
             className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
@@ -238,7 +244,7 @@ export function Library() {
             )
           })}
           <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
             className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
