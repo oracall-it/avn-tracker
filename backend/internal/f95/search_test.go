@@ -49,9 +49,11 @@ func TestExtractVersion(t *testing.T) {
 		{"[Unity] Game [Chapter 5 Part 2]", "Chapter 5 Part 2"},
 		{"[Unity] [Abandoned] Game [Final]", "Final"},
 		{"[Ren'Py] [Completed] Game [v2.0 SE]", "v2.0 SE"},
-		{"Game Title", ""},           // no brackets
-		{"[Unity] Game", ""},         // only engine label
-		{"[Unity] [Abandoned] Game", ""},  // engine + status, no version
+		{"Game Title [v1.0] [DevName]", "v1.0"},           // dev bracket after version
+		{"[Unity] Game [v2.0] [SomeDev]", "v2.0"},         // engine + version + dev
+		{"Game Title", ""},                                 // no brackets
+		{"[Unity] Game", ""},                               // only engine label
+		{"[Unity] [Abandoned] Game", ""},                   // engine + status, no version
 	}
 
 	for _, c := range cases {

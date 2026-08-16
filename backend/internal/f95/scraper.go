@@ -64,7 +64,7 @@ func extractVersion(rawTitle string) string {
 	if len(candidates) == 0 {
 		return ""
 	}
-	return candidates[len(candidates)-1]
+	return candidates[0]
 }
 
 // GetGame fetches and parses a single F95Zone thread page.
