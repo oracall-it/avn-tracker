@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@apollo/client'
 import { LayoutGrid, List, Plus, Loader2, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
@@ -77,14 +77,29 @@ function PerPageSelect({ value, onChange }: { value: number; onChange: (n: numbe
 export function Library() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<View>(() => (localStorage.getItem('view') as View) ?? 'grid')
-  const [filter, setFilter] = useState<GameFilter>({})
   const [editGame, setEditGame] = useState<Game | null>(null)
   const [showAdd, setShowAdd] = useState(false)
-  const page = Number(searchParams.get('page') ?? '1')
   const [perPage, setPerPage] = useState<number>(() => {
     const v = localStorage.getItem('lib-per-page')
     return v ? Number(v) : 24
   })
+
+  // Derive all filter state from URL params
+  const page = Number(searchParams.get('page') ?? '1')
+  const filter = useMemo<GameFilter>(() => {
+    const status = searchParams.get('status') as GameFilter['status']
+    const devStatus = searchParams.get('devStatus') as GameFilter['devStatus']
+    const hasUpdate = searchParams.get('hasUpdate')
+    const tags = searchParams.getAll('tag')
+    const search = searchParams.get('search')
+    return {
+      ...(status ? { status } : {}),
+      ...(devStatus ? { devStatus } : {}),
+      ...(hasUpdate === 'true' ? { hasUpdate: true } : {}),
+      ...(tags.length ? { tags } : {}),
+      ...(search ? { search } : {}),
+    }
+  }, [searchParams])
 
   const { data, loading, error } = useQuery<{ games: Game[] }>(GET_GAMES, {
     variables: { filter },
@@ -106,7 +121,19 @@ export function Library() {
     setSearchParams(prev => { const n = new URLSearchParams(prev); n.set('page', String(p)); return n }, { replace: true })
   }
 
-  const updateFilter = (f: GameFilter) => { setFilter(f); setPage(1) }
+  const updateFilter = useCallback((f: GameFilter) => {
+    setSearchParams(prev => {
+      const n = new URLSearchParams(prev)
+      n.set('page', '1')
+      f.status ? n.set('status', f.status) : n.delete('status')
+      f.devStatus ? n.set('devStatus', f.devStatus) : n.delete('devStatus')
+      f.hasUpdate ? n.set('hasUpdate', 'true') : n.delete('hasUpdate')
+      n.delete('tag')
+      f.tags?.forEach(t => n.append('tag', t))
+      f.search ? n.set('search', f.search) : n.delete('search')
+      return n
+    }, { replace: true })
+  }, [setSearchParams])
 
   const setPerPagePersisted = (n: number) => {
     setPerPage(n)
