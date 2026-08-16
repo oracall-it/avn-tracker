@@ -65,6 +65,7 @@ type Game struct {
 
 type GameFilter struct {
 	Status    *GameStatus `json:"status,omitempty"`
+	DevStatus *DevStatus  `json:"devStatus,omitempty"`
 	HasUpdate *bool       `json:"hasUpdate,omitempty"`
 	Tags      []string    `json:"tags,omitempty"`
 	Search    *string     `json:"search,omitempty"`

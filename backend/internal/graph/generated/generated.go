@@ -915,6 +915,7 @@ type Game {
 
 input GameFilter {
   status: GameStatus
+  devStatus: DevStatus
   hasUpdate: Boolean
   tags: [String!]
   search: String
@@ -5200,7 +5201,7 @@ func (ec *executionContext) unmarshalInputGameFilter(ctx context.Context, obj an
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "hasUpdate", "tags", "search"}
+	fieldsInOrder := [...]string{"status", "devStatus", "hasUpdate", "tags", "search"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5214,6 +5215,13 @@ func (ec *executionContext) unmarshalInputGameFilter(ctx context.Context, obj an
 				return it, err
 			}
 			it.Status = data
+		case "devStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("devStatus"))
+			data, err := ec.unmarshalODevStatus2ᚖavnᚑtrackerᚋbackendᚋinternalᚋmodelᚐDevStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DevStatus = data
 		case "hasUpdate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasUpdate"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)

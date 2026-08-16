@@ -44,6 +44,7 @@ export interface VNDBPage {
 
 export interface GameFilter {
   status?: GameStatus | null
+  devStatus?: DevStatus | null
   hasUpdate?: boolean | null
   tags?: string[]
   search?: string | null

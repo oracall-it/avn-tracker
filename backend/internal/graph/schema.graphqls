@@ -36,6 +36,7 @@ type Game {
 
 input GameFilter {
   status: GameStatus
+  devStatus: DevStatus
   hasUpdate: Boolean
   tags: [String!]
   search: String

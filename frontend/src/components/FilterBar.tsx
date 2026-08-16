@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, Hash, Search, X } from 'lucide-react'
-import { GameStatus, GameFilter, STATUS_LABELS } from '../types/game'
+import { GameStatus, DevStatus, GameFilter, STATUS_LABELS, DEV_STATUS_LABELS } from '../types/game'
 
 const ALL_STATUSES: (GameStatus | null)[] = [null, 'PLAYING', 'WANT', 'COMPLETED', 'ON_HOLD', 'DROPPED']
 
@@ -8,6 +8,83 @@ interface Props {
   filter: GameFilter
   onChange: (f: GameFilter) => void
   tags: string[]
+}
+
+const DEV_STATUS_OPTIONS: { value: DevStatus | null; label: string }[] = [
+  { value: null, label: 'Any dev status' },
+  { value: 'ONGOING', label: 'Ongoing' },
+  { value: 'COMPLETE', label: 'Complete' },
+  { value: 'ABANDONED', label: 'Abandoned' },
+]
+
+function DevStatusSelect({ value, onChange }: { value: DevStatus | null; onChange: (v: DevStatus | null) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onMouse = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onMouse)
+    return () => document.removeEventListener('mousedown', onMouse)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const hasValue = value !== null
+  const label = value ? DEV_STATUS_LABELS[value] : 'Dev status'
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-1.5 bg-white dark:bg-stone-900 border rounded-xl px-3 py-2 text-sm transition-colors focus:outline-none min-w-36 w-36
+          ${open || hasValue ? 'border-amber-400 dark:border-amber-600' : 'border-stone-200 dark:border-stone-700'}
+          ${hasValue ? 'text-amber-700 dark:text-amber-400' : 'text-stone-700 dark:text-stone-300'}`}
+      >
+        <span className="flex-1 text-left">{label}</span>
+        {hasValue ? (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={e => { e.stopPropagation(); onChange(null); setOpen(false) }}
+            onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); onChange(null); setOpen(false) } }}
+            className="flex-none text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
+          >
+            <X size={13} />
+          </span>
+        ) : (
+          <ChevronDown size={13} className={`flex-none text-stone-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1.5 left-0 z-30 w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg overflow-hidden py-1">
+          {DEV_STATUS_OPTIONS.map(opt => (
+            <button
+              key={opt.value ?? 'all'}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false) }}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors
+                ${opt.value === value
+                  ? 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                  : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+                }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const pillBase = 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors border'
@@ -161,7 +238,7 @@ export function FilterBar({ filter, onChange, tags }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Status pills */}
+      {/* My status pills */}
       <div className="flex flex-wrap gap-2">
         {ALL_STATUSES.map(status => (
           <button
@@ -180,7 +257,7 @@ export function FilterBar({ filter, onChange, tags }: Props) {
         </button>
       </div>
 
-      {/* Search + tag filter */}
+      {/* Search + dev status + tag filter */}
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-48">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500" />
@@ -200,6 +277,11 @@ export function FilterBar({ filter, onChange, tags }: Props) {
             </button>
           )}
         </div>
+
+        <DevStatusSelect
+          value={filter.devStatus ?? null}
+          onChange={ds => set({ devStatus: ds })}
+        />
 
         {tags.length > 0 && (
           <TagSelect

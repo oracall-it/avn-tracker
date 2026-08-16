@@ -35,6 +35,11 @@ func (r *GameRepo) List(ctx context.Context, filter *model.GameFilter) ([]*model
 			args = append(args, string(*filter.Status))
 			i++
 		}
+		if filter.DevStatus != nil {
+			q += fmt.Sprintf(" AND dev_status = $%d", i)
+			args = append(args, string(*filter.DevStatus))
+			i++
+		}
 		for _, tag := range filter.Tags {
 			q += fmt.Sprintf(" AND $%d = ANY(tags)", i)
 			args = append(args, tag)
